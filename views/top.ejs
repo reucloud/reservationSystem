@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/public/style.css" />
+  </head>
+  <body>
+    <!-- パスワードをお忘れの方への写真 -->
+    <%- include("header") %>
+    <div class="userAllWrapper">
+      <div class="time">
+        <h2>予約画面</h2>
+        <div class="time-right">
+          <h4>
+            <%= (() => { const d = new Date(users.updated_at); const yyyy =
+            d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2,
+            '0'); const dd = String(d.getDate()).padStart(2, '0'); const hh =
+            String(d.getHours()).padStart(2, '0'); const mi =
+            String(d.getMinutes()).padStart(2, '0'); const ss =
+            String(d.getSeconds()).padStart(2, '0'); return `${yyyy}/${mm}/${dd}
+            ${hh}:${mi}:${ss}`; })() %> 時点
+          </h4>
+        </div>
+      </div>
+      <div class="wrapper">
+        <div class="reserve">
+          <form action="/reservation" method="post">
+            <label for="">予約日</label>
+            <input type="date" name="reserve_day" required />
+
+            <label for="">開始時間</label>
+            <input type="time" name="start_time" required />
+
+            <label for="">利用時間</label>
+            <input type="text" name="usage_time" required />
+
+            <label for="">内容選択</label>
+            <select name="resource" required>
+              <option value="massage">マッサージ</option>
+              <option value="cook">調理</option>
+            </select>
+
+            <label for="">クーポンコード</label>
+            <input type="text" name="coupon" />
+            <% if(couponError){ %>
+            <p>クーポンコードが正しくありません</p>
+            <% } %>
+
+            <label for="">備考</label>
+            <input type="textarea" name="memo" />
+
+            <input
+              type="submit"
+              value="予約する"
+              onsubmit="return confirm('予約します。よろしいですか？');"
+            />
+          </form>
+        </div>
+        <div class="information">
+          <div class="userNewsList">
+            <div class="newsTop">
+              <h3>お知らせ</h3>
+            </div>
+            <div class="newsContents">
+              <ul>
+                <% const today = new Date(); %> <% if (news !== undefined) { %>
+                <% news.forEach(item => { %> <% const deadline = new
+                Date(item.finish_date); const dateCheck = today <= deadline; %>
+                <% if(dateCheck){ %>
+                <li>
+                  <strong><%= item.name %></strong><br />
+                  <small><%= item.contents %></small>
+                </li>
+                <% }})} %>
+              </ul>
+            </div>
+          </div>
+          <div class="reserveList">
+            <div class="reservationTop">
+              <h3>予約一覧</h3>
+            </div>
+            <div class="reservationContents">
+              <table>
+                <thead>
+                  <tr>
+                    <th>予約日</th>
+                    <th>開始時刻</th>
+                    <th>利用時間</th>
+                    <th>状態</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% reservation.forEach(reserve => { %> <% if(reserve.user_id
+                  === id){ %> <% const reserveday = new
+                  Date(reserve.reserve_day); const format = (d) =>
+                  `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+                  %>
+                  <tr>
+                    <td><%= format(reserveday) %></td>
+                    <td><%= reserve.start_time %></td>
+                    <td><%= reserve.usage_time %>分</td>
+                    <td><%= reserve.status %></td>
+                  </tr>
+                  <% }}) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

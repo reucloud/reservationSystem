@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/public/style.css" />
+  </head>
+  <body>
+    <%- include("header") %>
+    <div class="userAllWrapper">
+      <div class="time">
+        <h2>チャージ画面</h2>
+        <div class="time-right">
+          <h4>
+            <%= (() => { const d = new Date(users.updated_at); const yyyy =
+            d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2,
+            '0'); const dd = String(d.getDate()).padStart(2, '0'); const hh =
+            String(d.getHours()).padStart(2, '0'); const mi =
+            String(d.getMinutes()).padStart(2, '0'); const ss =
+            String(d.getSeconds()).padStart(2, '0'); return `${yyyy}/${mm}/${dd}
+            ${hh}:${mi}:${ss}`; })() %> 時点
+          </h4>
+        </div>
+      </div>
+      <div class="nowPoint">
+        <h3>チャージ済金額: <%= users.charge %> 円</h3>
+      </div>
+      <div class="chargeButton">
+        <button data-amount="500">500円<br />チャージ</button>
+        <button data-amount="1000">1000円<br />チャージ</button>
+        <button data-amount="1500">1500円<br />チャージ</button>
+        <button data-amount="2000">2000円<br />チャージ</button>
+        <button data-amount="2500">2500円<br />チャージ</button>
+      </div>
+      <div class="chargeAmount">
+        <div>
+          <h3>チャージ金額</h3>
+          <div class="amount">
+            <form class="chargeInput" action="/charge" method="post">
+              <input type="number" id="chargeInput" name="charge" />
+              <h3 class="yen">円</h3>
+              <input type="submit" value="チャージする" />
+              <input type="button" id="resetButton" value="リセット" />
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  const buttons = document.querySelectorAll(".chargeButton button");
+  const chargeInput = document.getElementById("chargeInput");
+  const resetButton = document.getElementById("resetButton");
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const amount = Number(button.dataset.amount); // 500など
+      const current = Number(chargeInput.value) || 0;
+
+      chargeInput.value = current + amount;
+    });
+  });
+
+  resetButton.addEventListener("click", () => {
+    // chargeInput.value = "";
+    // 0にしたい場合は ↓
+    chargeInput.value = 0;
+  });
+</script>

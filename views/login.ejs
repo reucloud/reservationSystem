@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="login">
+      <!-- ログインの写真 -->
+      <h3>ログイン</h3>
+    </div>
+    <div class="infoInput">
+      <form class="input" action="/login" method="post">
+        <label for="">メールアドレス:</label>
+        <input type="email" name="mail" required />
+        <label for="">パスワード:</label>
+        <input type="password" name="password" required />
+        <input type="submit" value="ログイン" required />
+      </form>
+      <div class="pageChange">
+        <a href="/newUser">新規登録はこちら</a>
+        <!-- <a href="/forgetPassword">パスワードをお忘れの方はこちら</a> -->
+      </div>
+    </div>
+  </body>
+</html>

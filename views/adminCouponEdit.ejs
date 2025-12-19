@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="login">
+      <!-- ログインの写真 -->
+      <h3>クーポン編集画面</h3>
+    </div>
+    <form
+      class="couponSet"
+      action="/adminCoupons/edit/<%= coupon.id %>"
+      method="post"
+    >
+      <label for="">クーポン名</label>
+      <input name="name" value="<%= coupon.name %>" type="text" required />
+      <label for="">クーポンコード</label>
+      <input name="code" value="<%= coupon.code %>" type="text" required />
+      <div class="radio">
+        <label for="">割引</label>
+        <input type="radio" name="type" value="percent" <%= coupon.type ===
+        "percent" ? "checked" : "" %> />
+        <label>%</label>
+
+        <input type="radio" name="type" value="yen" <%= coupon.type === "yen" ?
+        "checked" : "" %> />
+        <label>円</label>
+        <input type="radio" name="open" value="open" <%= coupon.is_open === 1 ?
+        "checked" : "" %>/>
+        <label for="">公開</label>
+        <input type="radio" name="open" value="close" <%= coupon.is_open === 0 ?
+        "checked" : "" %>/>
+        <label for="">非公開</label>
+      </div>
+      <label for="">割引率</label>
+      <input
+        type="number"
+        name="discount"
+        value="<%= coupon.discount %>"
+        required
+      />
+      <label for="">割引条件金額(下限)</label>
+      <input type="number" name="filter" value="<%= coupon.filter %>" />
+      <label for="">配布開始日</label>
+      <input
+        type="date"
+        name="start_date"
+        value="<%= coupon.start_date.toISOString().split('T')[0] %>"
+        required
+      />
+      <label for="">配布終了日</label>
+      <input
+        type="date"
+        name="finish_date"
+        value="<%= coupon.finish_date.toISOString().split('T')[0] %>"
+        required
+      />
+      <label for="">写真ファイル</label>
+      <input type="text" name="photo" value="<%= coupon.photo %>" required />
+      <label for="">対象サービス</label>
+      <div>
+        <input type="checkbox" name="service[]" value="マッサージ" <%=
+        coupon.service.includes("マッサージ") ? "checked" : "" %> />
+        <label>マッサージ</label>
+
+        <input type="checkbox" name="service[]" value="料理" <%=
+        coupon.service.includes("料理") ? "checked" : "" %> />
+        <label>料理</label>
+      </div>
+
+      <p id="serviceError" style="color: red; display: none">
+        対象サービスを1つ以上選択してください
+      </p>
+      <script>
+        document
+          .querySelector(".couponSet")
+          .addEventListener("submit", function (e) {
+            const services = document.querySelectorAll(
+              'input[name="service[]"]:checked'
+            );
+
+            if (services.length === 0) {
+              e.preventDefault();
+              document.getElementById("serviceError").style.display = "block";
+            }
+          });
+      </script>
+      <label for="">注意事項</label>
+      <textarea name="memo"><%= coupon.memo %></textarea>
+      <input type="submit" value="登録する" />
+    </form>
+  </body>
+</html>

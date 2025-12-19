@@ -1,0 +1,18 @@
+<link rel="stylesheet" href="/style.css" />
+<header>
+  <h3>予約管理</h3>
+  <ul>
+    <% if(users.role === "admin"){ %>
+    <li><a href="/adminTop">管理者画面へ</a></li>
+    <li><a href="/top">お客様画面へ</a></li>
+    <li><a href="/adminCoupons">クーポン設定</a></li>
+    <li><a href="/adminNews">お知らせ設定</a></li>
+    <li><a href="/">ログアウト</a></li>
+    <% }else{ %>
+    <li><a href="/top">トップ</a></li>
+    <li><a href="/charge">チャージ</a></li>
+    <li><a href="/coupons">クーポン</a></li>
+    <li><a href="/">ログアウト</a></li>
+    <% } %>
+  </ul>
+</header>

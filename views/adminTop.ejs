@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/public/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"
+    />
+  </head>
+  <body>
+    <div>
+      <!-- パスワードをお忘れの方への写真 -->
+      <%- include("header") %>
+      <div class="allwrapper">
+        <div class="time">
+          <h2>管理者トップ</h2>
+          <div class="time-right">
+            <h4>
+              <%= (() => { const d = new Date(users.updated_at); const yyyy =
+              d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2,
+              '0'); const dd = String(d.getDate()).padStart(2, '0'); const hh =
+              String(d.getHours()).padStart(2, '0'); const mi =
+              String(d.getMinutes()).padStart(2, '0'); const ss =
+              String(d.getSeconds()).padStart(2, '0'); return
+              `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}`; })() %> 時点
+            </h4>
+          </div>
+        </div>
+        <div class="wrapper">
+          <div class="vertical">
+            <div class="reserveButton">
+              <div class="todaySchedules">
+                <span class="fa fa-clock-o"></span>
+                <a href="/adminTop?range=today">
+                  Today's Schedules<br />本日の予約 click!
+                </a>
+              </div>
+              <div class="allSchedules">
+                <span class="fa fa-list"></span>
+                <a href="/adminTop?range=all">
+                  Today's Reserve List<br />全ての予約 click!
+                </a>
+              </div>
+            </div>
+            <div class="reserveCheck">
+              <div class="reserveCheckTop">
+                <h3>予約確認</h3>
+              </div>
+              <div class="reserveCheckContents">
+                <h3>内容は後ほど実装</h3>
+              </div>
+            </div>
+          </div>
+          <div class="information">
+            <div class="newsPrint">
+              <div class="newsTop">
+                <h3>お知らせ</h3>
+              </div>
+              <div class="newsContents">
+                <ul>
+                  <% const today = new Date(); %> <% if (news !== undefined) {
+                  %> <% news.forEach(item => { %> <% const deadline = new
+                  Date(item.finish_date); const dateCheck = today <= deadline;
+                  %> <% if(dateCheck){ %>
+                  <li>
+                    <strong><%= item.name %></strong><br />
+                    <small><%= item.contents %></small>
+                  </li>
+                  <% }})} %>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,374 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.login,
+.newUser {
+  background-color: rgb(12, 0, 103);
+  h3 {
+    margin: 0;
+    color: white;
+    padding: 18.72px 0px 18.72px 20px;
+    padding-left: 20px;
+  }
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+  width: 40%;
+  input {
+    margin-bottom: 20px;
+  }
+}
+
+.infoInput {
+  padding: 20px;
+}
+
+.allwrapper {
+  min-height: 100vh; /*画面の高さぶん確保*/
+  display: flex;
+  flex-direction: column;
+  padding: 0px 20px 0px 20px;
+}
+
+.pageChange {
+  display: flex;
+  flex-direction: column;
+  a {
+    color: black;
+    text-decoration: none;
+  }
+}
+
+header li {
+  list-style: none;
+}
+header {
+  display: flex;
+  background-color: rgb(12, 0, 103);
+  color: white;
+  align-items: center;
+}
+header ul {
+  display: flex;
+  margin-left: auto;
+}
+header h3 {
+  padding-left: 20px;
+}
+header a {
+  text-decoration: none;
+  color: white;
+  padding: 0 15px;
+}
+.userAllWrapper {
+  padding: 0 10px 0 10px;
+}
+.time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.time-right {
+  display: flex;
+  align-items: center;
+  h3,
+  a {
+    text-decoration: none;
+    padding: 0 15px;
+    margin-right: 20px;
+  }
+  a {
+    color: black;
+  }
+}
+.wrapper {
+  padding: 0 10px 0 10px;
+  display: flex;
+  width: 100%;
+  flex: 1; /* 残りの高さを全部使う */
+  /* flex-direction: column; */
+  /* align-items: stretch; */
+  align-items: flex-start; /* ★これ重要：高さ連動を切る */
+}
+
+.reserve {
+  width: 60%;
+  margin: 0px 20px 20px 10px;
+}
+
+.reserve form {
+  display: flex;
+  flex-direction: column; /* 縦並び */
+}
+
+.reserve input,
+.reserve select {
+  margin-bottom: 30px;
+}
+
+.information {
+  display: flex;
+  flex-direction: column; /* 縦並び */
+  margin: 0;
+  padding: 0 20px 0px 10px;
+  flex: 1;
+  width: auto;
+  /* height: 100%; */
+  align-self: stretch;
+}
+
+.newsTop {
+  /* border-radius: 5px; */
+  color: white;
+  background-color: rgb(255, 20, 60);
+  height: 50px;
+}
+
+.newsContents {
+  height: 100%;
+}
+
+.newsPrint,
+.userNewsList,
+.reservationContents {
+  /* border-radius: 5px; */
+  background-color: rgb(220, 220, 220);
+}
+
+.newsPrint {
+  width: 100%;
+  height: 100%;
+}
+.userNewsList {
+  height: 40%;
+}
+.reserveList {
+  height: 60%;
+  display: flex;
+  flex-direction: column;
+  /* flex: 1; ←高さを親の中で自動調整 */
+}
+.reservationTop {
+  height: 50px; /* 固定高さにする */
+  /* padding-bottom: 0; */
+}
+.reservationContents {
+  flex: 1; /* 残り全部使う */
+}
+.reservationContents th {
+  width: 25%;
+}
+.reservationContents td {
+  text-align: center;
+}
+
+.reservationTop h3,
+.reserveCheckTop h3 {
+  color: white;
+  background-color: rgb(0, 81, 161);
+  padding: 10px 10px 10px 20px;
+  margin: 0;
+}
+
+.newsContents,
+.reservationContents {
+  overflow-y: auto;
+}
+
+.newsTop h3 {
+  margin: 0;
+  padding: 10px 10px 10px 20px;
+}
+
+.reserveButton {
+  display: flex;
+  height: 30%;
+  a {
+    color: white;
+    text-decoration: none;
+  }
+}
+.reserveButton .todaySchedules {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(75, 37, 227);
+  padding: 20px;
+  margin-right: 20px;
+  border-radius: 5px;
+  width: 50%;
+  text-align: center;
+}
+.reserveButton .todaySchedules span {
+  font-size: 28px;
+  color: white;
+  margin-bottom: 8px;
+}
+.reserveButton .todaySchedules a {
+  font-size: 23px;
+  color: white;
+  text-decoration: none;
+}
+.reserveButton .allSchedules {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(15, 157, 29);
+  padding: 20px;
+  margin-right: 20px;
+  border-radius: 5px;
+  /* height: 100px; */
+  width: 50%;
+  text-align: center;
+}
+.reserveButton .allSchedules span {
+  font-size: 30px;
+  color: white;
+  margin-bottom: 8px;
+}
+.reserveButton .allSchedules a {
+  font-size: 23px;
+  color: white;
+  text-decoration: none;
+}
+.reserveCheck {
+  height: 90%;
+  color: white;
+  margin-right: 20px;
+  /* border-radius: 5px; */
+}
+.reserveCheckTop {
+  height: 10%;
+}
+.reserveCheckContents {
+  height: 100%;
+}
+.reserveCheckTop h3 {
+  margin-top: 20px;
+}
+.reserveCheckContents h3 {
+  margin: 0;
+  height: 90%;
+  color: black;
+  background-color: rgb(220, 220, 220);
+}
+.vertical {
+  display: flex;
+  flex-direction: column; /* 縦並び */
+  flex: 2;
+  width: auto;
+  align-self: stretch;
+}
+.couponsWrapper,
+.newsWrapper {
+  display: flex;
+  height: 100%;
+}
+.couponInputList,
+.newsInputList {
+  flex: 1;
+}
+.couponsList,
+.newsList {
+  /* height: 100%; */
+  width: 66%;
+  th,
+  td {
+    width: 15%;
+    text-align: center;
+  }
+}
+.border {
+  border: 1px solid black;
+}
+.userAllWrapper {
+  height: 80%;
+}
+.couponSet,
+.newsSet {
+  display: flex;
+  flex-direction: column;
+  input,
+  textarea {
+    margin-bottom: 10px;
+  }
+}
+fieldset {
+  border: 1px solid #999;
+}
+.couponsList thead th,
+.newsList thead th {
+  border-bottom: 1px solid #999;
+}
+.couponsList tbody td,
+.newsList tbody td {
+  border-bottom: 1px solid #999;
+}
+.couponsList table,
+.newsList table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.chargeButton {
+  width: 100%;
+  margin-bottom: 20px;
+}
+.chargeButton button {
+  text-decoration: none;
+  color: black;
+  font-size: 20px;
+  padding: 45px 15px;
+  width: 19%;
+}
+
+.chargeInput {
+  display: flex;
+  align-items: center;
+}
+
+.yen {
+  margin: 0px 20px 0 10px;
+}
+.couponDetails ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 20px;
+  margin: 0;
+  justify-content: flex-start;
+}
+.couponDetails fieldset {
+  width: calc(25% - 24px);
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.couponDetails img {
+  width: 80px;
+  height: auto;
+  margin-bottom: 12px;
+}
+.couponDetails li {
+  list-style: none;
+  font-size: 14px;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.couponDetails {
+  border-radius: 8px;
+}

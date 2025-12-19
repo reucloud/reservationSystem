@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="login">
+      <!-- ログインの写真 -->
+      <h3>クーポン編集画面</h3>
+    </div>
+    <form
+      class="couponSet"
+      action="/adminNews/edit/<%= news.id %>"
+      method="post"
+    >
+      <!-- タイトル、開始、終了、本文 -->
+      <label for="">タイトル</label>
+      <input type="text" name="title" value="<%= news.name %>" required />
+      <label for="">公開開始日</label>
+      <input
+        type="date"
+        name="start_date"
+        value="<%= news.start_date.toISOString().split('T')[0]%>"
+        required
+      />
+      <label for="">公開終了日</label>
+      <input
+        type="date"
+        name="finish_date"
+        value="<%=news.finish_date.toISOString().split('T')[0]%>"
+        required
+      />
+      <label for="">本文</label>
+      <textarea name="contents" id="" required><%= news.contents %></textarea>
+      <input type="submit" value="登録する" />
+    </form>
+  </body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/public/style.css" />
+  </head>
+  <body>
+    <%- include("header") %>
+    <div class="userAllWrapper">
+      <div class="time">
+        <h2>お知らせ修正画面</h2>
+        <div class="time-right">
+          <h4>
+            <%= (() => { const d = new Date(users.updated_at); const yyyy =
+            d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2,
+            '0'); const dd = String(d.getDate()).padStart(2, '0'); const hh =
+            String(d.getHours()).padStart(2, '0'); const mi =
+            String(d.getMinutes()).padStart(2, '0'); const ss =
+            String(d.getSeconds()).padStart(2, '0'); return `${yyyy}/${mm}/${dd}
+            ${hh}:${mi}:${ss}`; })() %> 時点
+          </h4>
+        </div>
+      </div>
+      <div class="newsWrapper">
+        <fieldset class="newsList">
+          <table>
+            <thead>
+              <tr>
+                <th>タイトル</th>
+                <th>表示期間</th>
+                <th>本文</th>
+                <th>編集</th>
+                <th>削除</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% news.forEach(news => { %> <% const start = new
+              Date(news.start_date); const end = new Date(news.finish_date);
+              const format = (d) =>
+              `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+              %>
+              <tr>
+                <td><%= news.name %></td>
+                <div>
+                  <td><%= format(start) %> <br />〜 <%= format(end) %></td>
+                </div>
+                <td><%= news.contents %></td>
+                <td>
+                  <form action="/adminNews/edit/<%= news.id %>" method="get">
+                    <button type="submit">編集</button>
+                  </form>
+                </td>
+                <td>
+                  <form
+                    action="/adminNews/delete/<%= news.id %>"
+                    method="post"
+                    onsubmit="return confirm('本当に削除しますか？');"
+                  >
+                    <button type="submit">削除</button>
+                  </form>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </fieldset>
+        <fieldset class="newsInputList">
+          <form class="newsSet" action="/newsInput" method="post">
+            <label for="">タイトル</label>
+            <input type="text" name="title" required />
+            <label for="">公開開始日</label>
+            <input type="date" name="start_date" required />
+            <label for="">公開終了日</label>
+            <input type="date" name="finish_date" required />
+            <label for="">本文</label>
+            <textarea name="contents" id="" required></textarea>
+            <input type="submit" value="登録する" />
+          </form>
+        </fieldset>
+      </div>
+    </div>
+  </body>
+</html>
