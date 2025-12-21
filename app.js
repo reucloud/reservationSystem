@@ -7,20 +7,14 @@ import open from "open";
 import path from "path";
 import { fileURLToPath } from "url"; // 追加
 
-import dotenv from "dotenv";
-
 const __filename = fileURLToPath(import.meta.url); // 追加
 const __dirname = path.dirname(__filename); // 追加
 
-dotenv.config({ path: path.join(__dirname, "setup.env") });
-
-// 環境変数から取得
 const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
+  host: "localhost",
+  user: "root",
+  password: "reucloud1412",
+  database: "reservation_system",
 });
 
 connection.connect((err) => {
@@ -426,6 +420,14 @@ app.get("/top", (req, res) => {
 app.post("/login", (req, res) => {
   const mail = req.body.mail;
   const password = req.body.password;
+  const errors = [];
+
+  if (mail === "") {
+    errors.push("メールアドレスが空欄です");
+  }
+  if (password === "") {
+    errors.push("パスワード欄が空欄です");
+  }
 
   connection.query(
     "SELECT * FROM users WHERE email = ?",
@@ -648,7 +650,7 @@ app.get("/adminTop", (req, res) => {
   );
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(3000, () => {
+  console.log("Server running at http://localhost:3000");
+  open("http://localhost:3000/");
 });
