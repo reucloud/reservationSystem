@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/public/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"
+    />
+  </head>
+  <body>
+    <div>
+      <!-- パスワードをお忘れの方への写真 -->
+      <%- include("header") %>
+      <div class="allwrapper">
+        <div class="time">
+          <h2>管理者トップ</h2>
+          <div class="time-right">
+            <h4>
+              <% if (users && users.updated_at) { const d = new
+              Date(users.updated_at); const yyyy = d.getFullYear(); const mm =
+              String(d.getMonth() + 1).padStart(2, "0"); const dd =
+              String(d.getDate()).padStart(2, "0"); const hh =
+              String(d.getHours()).padStart(2, "0"); const mi =
+              String(d.getMinutes()).padStart(2, "0"); const ss =
+              String(d.getSeconds()).padStart(2, "0"); %> <%=
+              `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}` %> 時点 <% } else { %>
+              --:--:-- 時点 <% } %>
+            </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -82,6 +82,67 @@ app.get("/adminCoupons", (req, res) => {
   );
 });
 
+app.get("/salesManagement", (req, res) => {
+  const id = req.session.userId;
+  if (!id) return res.redirect("/");
+
+  // 更新時間更新
+  connection.query(
+    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+    [id],
+    (error) => {
+      if (error) throw error;
+
+      // ユーザー情報取得
+      connection.query(
+        "SELECT * FROM users WHERE id = ?",
+        [id],
+        (error, userResults) => {
+          if (error) throw error;
+          const user = userResults[0];
+
+          // 売上合計
+          const salesSql = `
+            SELECT
+              SUM(amount) AS total_sales
+            FROM reservations
+            WHERE status != 'キャンセル'
+          `;
+
+          // サービス別ランキング
+          const rankingSql = `
+            SELECT
+              resources.name AS resource_name,
+              SUM(reservations.amount) AS total_amount,
+              COUNT(*) AS count
+            FROM reservations
+            JOIN resources ON reservations.resource_id = resources.id
+            WHERE reservations.status != 'キャンセル'
+            GROUP BY resources.id
+            ORDER BY total_amount DESC
+          `;
+
+          connection.query(salesSql, (error, salesResult) => {
+            if (error) throw error;
+            const totalSales = salesResult[0].total_sales || 0;
+
+            connection.query(rankingSql, (error, rankingResult) => {
+              if (error) throw error;
+
+              res.render("salesManagement", {
+                users: user,
+                totalSales,
+                ranking: rankingResult || [],
+                id: id,
+              });
+            });
+          });
+        }
+      );
+    }
+  );
+});
+
 app.post("/couponInput", (req, res) => {
   const couponName = req.body.name;
   const couponCode = req.body.code;
