@@ -39,16 +39,6 @@ app.use(
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// キャッシュ無効化
-// 戻るボタン無効化
-// app.use((req, res, next) => {
-//   res.setHeader(
-//     "Cache-Control",
-//     "no-store, no-cache, must-revalidate, private"
-//   );
-//   next();
-// });
-
 app.get("/", (req, res) => {
   res.render("login");
 });
@@ -430,14 +420,6 @@ app.get("/top", (req, res) => {
 app.post("/login", (req, res) => {
   const mail = req.body.mail;
   const password = req.body.password;
-  const errors = [];
-
-  if (mail === "") {
-    errors.push("メールアドレスが空欄です");
-  }
-  if (password === "") {
-    errors.push("パスワード欄が空欄です");
-  }
 
   connection.query(
     "SELECT * FROM users WHERE email = ?",
@@ -449,7 +431,12 @@ app.post("/login", (req, res) => {
 
       if (results.length > 0 && password === results[0].password) {
         req.session.userId = results[0].id;
-        res.redirect("/top");
+
+        if (results[0].role === "admin") {
+          return res.redirect("/adminTop");
+        } else {
+          return res.redirect("/top");
+        }
       }
     }
   );
