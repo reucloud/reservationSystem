@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="login">
+      <!-- ログインの写真 -->
+      <h3>予約情報修正画面</h3>
+    </div>
+    <form
+      class="reserveEdit"
+      action="/adminTop/edit/<%= reserve.id %>"
+      method="post"
+    >
+      <label for="">予約者</label>
+      <input type="text" value="<%= reserve.user_name %>" disabled />
+      <input type="hidden" name="user_id" value="<%= reserve.user_id %>" />
+      <label for="">クーポンコード</label>
+      <input
+        name="coupon_code"
+        value="<%= reserve.coupon_code %>"
+        type="text"
+      />
+      <label for="">予約日</label>
+      <input
+        name="reserve_day"
+        type="date"
+        value="<%= reserve.reserve_day_str %>"
+        required
+      />
+      <label for="">開始時間</label>
+      <input
+        type="time"
+        name="start_time"
+        value="<%= reserve.start_time %>"
+        required
+      />
+      <label for="">利用時間</label>
+      <input
+        type="number"
+        name="usage_time"
+        value="<%= reserve.usage_time %>"
+        required
+      />
+      <label for="">金額</label>
+      <input
+        type="number"
+        name="amount"
+        value="<%= reserve.amount %>"
+        required
+      />
+      <label for="">メモ</label>
+      <input type="text" name="memo" value="<%= reserve.memo %>" />
+      <label for="">予約内容</label>
+      <select name="resource_id">
+        <% if (reserve.resource_id == 1) { %>
+        <option value="1" selected>マッサージ</option>
+        <% } else { %>
+        <option value="1">マッサージ</option>
+        <% } %> <% if (reserve.resource_id == 2) { %>
+        <option value="2" selected>料理</option>
+        <% } else { %>
+        <option value="2">料理</option>
+        <% } %> <% if (reserve.resource_id == 3) { %>
+        <option value="3" selected>その他</option>
+        <% } else { %>
+        <option value="3">その他</option>
+        <% } %>
+      </select>
+      <label for="">ステータス</label>
+      <select name="status">
+        <% if (reserve.status === '承認前') { %>
+        <option value="承認前" selected>承認前</option>
+        <% } else { %>
+        <option value="承認前">承認前</option>
+        <% } %> <% if (reserve.status === '承認済') { %>
+        <option value="承認済" selected>承認済</option>
+        <% } else { %>
+        <option value="承認済">承認済</option>
+        <% } %> <% if (reserve.status === 'キャンセル') { %>
+        <option value="キャンセル" selected>キャンセル</option>
+        <% } else { %>
+        <option value="キャンセル">キャンセル</option>
+        <% } %> <% if (reserve.status === '提供済') { %>
+        <option value="提供済" selected>提供済</option>
+        <% } else { %>
+        <option value="提供済">提供済</option>
+        <% } %>
+      </select>
+      <button type="submit">更新</button>
+    </form>
+  </body>
+</html>

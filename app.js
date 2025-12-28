@@ -133,7 +133,12 @@ app.get("/adminCoupons/edit/:id", (req, res) => {
   const couponId = req.params.id;
 
   connection.query(
-    "SELECT * FROM coupons WHERE id = ?",
+    `SELECT
+      *,
+      DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date_str,
+      DATE_FORMAT(finish_date, '%Y-%m-%d') AS finish_date_str
+    FROM coupons
+    WHERE id = ?`,
     [couponId],
     (error, results) => {
       if (error) throw error;
@@ -267,7 +272,12 @@ app.get("/adminNews/edit/:id", (req, res) => {
   const newsId = req.params.id;
 
   connection.query(
-    "SELECT * FROM news WHERE id = ?",
+    `SELECT
+      *,
+      DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date_str,
+      DATE_FORMAT(finish_date, '%Y-%m-%d') AS finish_date_str
+    FROM news
+    WHERE id = ?`,
     [newsId],
     (error, results) => {
       if (error) throw error;
@@ -607,7 +617,36 @@ async function AmountCheck(resource, usage_time, couponCode) {
 
 app.get("/adminTop", (req, res) => {
   const id = req.session.userId;
+  const range = req.query.range;
+  let reservationSql = "";
   if (!id) return res.redirect("/"); // ログインしていなければ戻す
+
+  if (range === "today") {
+    reservationSql = `
+SELECT
+  reservations.*,
+  DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
+  users.name AS user_name,
+  resources.name AS resource_name
+FROM reservations
+JOIN users ON reservations.user_id = users.id
+JOIN resources ON reservations.resource_id = resources.id
+WHERE DATE(reservations.reserve_day) = CURDATE()
+ORDER BY reservations.start_time
+`;
+  } else {
+    reservationSql = `
+SELECT
+  reservations.*,
+  DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
+  users.name AS user_name,
+  resources.name AS resource_name
+FROM reservations
+JOIN users ON reservations.user_id = users.id
+JOIN resources ON reservations.resource_id = resources.id
+ORDER BY reservations.reserve_day, reservations.start_time
+`;
+  }
 
   // DB上の更新時間を更新
   connection.query(
@@ -628,20 +667,17 @@ app.get("/adminTop", (req, res) => {
             (error, results) => {
               if (error) throw error;
               const news = results;
-              connection.query(
-                "SELECT * FROM reservations WHERE user_id = ?",
-                [id],
-                (error, reservations) => {
-                  if (error) throw error;
-                  const reserve = reservations;
-                  res.render("adminTop", {
-                    users: user,
-                    news: news || [],
-                    reservation: reserve || [],
-                    id: id,
-                  });
-                }
-              );
+              connection.query(reservationSql, (error, reservations) => {
+                if (error) throw error;
+                const reserve = reservations;
+                res.render("adminTop", {
+                  users: user,
+                  news: news || [],
+                  reservation: reserve || [],
+                  id: id,
+                  couponError: false,
+                });
+              });
             }
           );
         }
@@ -649,8 +685,66 @@ app.get("/adminTop", (req, res) => {
     }
   );
 });
+app.get("/adminTop/edit/:id", (req, res) => {
+  const topId = req.params.id;
+
+  const sql = `
+    SELECT
+      reservations.*,
+      DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
+      users.name AS user_name,
+      resources.name AS resource_name
+    FROM reservations
+    JOIN users ON reservations.user_id = users.id
+    JOIN resources ON reservations.resource_id = resources.id
+    WHERE reservations.id = ?
+  `;
+
+  connection.query(sql, [topId], (error, result) => {
+    if (error) throw error;
+
+    res.render("adminTopEdit.ejs", {
+      reserve: result[0],
+    });
+  });
+});
+app.post("/adminTop/edit/:id", (req, res) => {
+  const editId = req.params.id;
+
+  const {
+    coupon_code,
+    reserve_day,
+    start_time,
+    usage_time,
+    amount,
+    memo,
+    resource_id,
+    status,
+  } = req.body;
+
+  const resource = Number(resource_id);
+
+  connection.query(
+    "UPDATE reservations SET resource_id = ?, coupon_code = ?, reserve_day = ?, start_time = ?, usage_time = ?, amount = ?, status = ?, memo = ? WHERE id = ?",
+    [
+      resource,
+      coupon_code,
+      reserve_day,
+      start_time,
+      usage_time,
+      amount,
+      status,
+      memo,
+      editId,
+    ],
+    (error, results) => {
+      if (error) throw error;
+      res.redirect("/adminTop");
+    }
+  );
+});
 
 app.listen(3000, "0.0.0.0", () => {
   console.log("Server running at http://0.0.0.0:3000");
-  open("http://0.0.0.0:3000");
+  open("http://localhost:3000/");
 });

@@ -22,14 +22,14 @@
       <input
         type="date"
         name="start_date"
-        value="<%= news.start_date.toISOString().split('T')[0]%>"
+        value="<%= news.start_date_str %>"
         required
       />
       <label for="">公開終了日</label>
       <input
         type="date"
         name="finish_date"
-        value="<%=news.finish_date.toISOString().split('T')[0]%>"
+        value="<%= news.finish_date_str %>"
         required
       />
       <label for="">本文</label>

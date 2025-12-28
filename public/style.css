@@ -95,7 +95,7 @@ header a {
   flex: 1; /* 残りの高さを全部使う */
   /* flex-direction: column; */
   /* align-items: stretch; */
-  align-items: flex-start; /* ★これ重要：高さ連動を切る */
+  align-items: flex-start; /*★これ重要：高さ連動を切る*/
 }
 
 .reserve {
@@ -162,11 +162,17 @@ header a {
 .reservationContents {
   flex: 1; /* 残り全部使う */
 }
-.reservationContents th {
-  width: 25%;
+.reservationContents table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* ← 列幅を固定する */
 }
+
+.reservationContents th,
 .reservationContents td {
+  width: 25%;
   text-align: center;
+  /* word-break: break-word; */
 }
 
 .reservationTop h3,
@@ -241,6 +247,8 @@ header a {
   text-decoration: none;
 }
 .reserveCheck {
+  padding: 0;
+  margin: 0;
   height: 90%;
   color: white;
   margin-right: 20px;
@@ -251,15 +259,30 @@ header a {
 }
 .reserveCheckContents {
   height: 100%;
+  background-color: rgb(220, 220, 220);
+  ul {
+    margin: 0;
+  }
 }
 .reserveCheckTop h3 {
   margin-top: 20px;
 }
-.reserveCheckContents h3 {
-  margin: 0;
+.reserveCheckContents th,
+.reserveCheckContents td {
+  margin-top: 0;
   height: 90%;
   color: black;
-  background-color: rgb(220, 220, 220);
+  width: 15%;
+  text-align: center;
+}
+.reserveCheckContents table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* ← 列幅を固定する */
+}
+
+.reserveCheckContents td {
+  border-bottom: 1px solid #999;
 }
 .vertical {
   display: flex;
@@ -287,9 +310,7 @@ header a {
     text-align: center;
   }
 }
-.border {
-  border: 1px solid black;
-}
+
 .userAllWrapper {
   height: 80%;
 }
@@ -371,4 +392,39 @@ fieldset {
 
 .couponDetails {
   border-radius: 8px;
+}
+.reserveEdit {
+  display: flex;
+  flex-direction: column;
+  input,
+  select {
+    margin-bottom: 20px;
+  }
+}
+
+/* ===== チャージ確認モーダル（画面に被せる） ===== */
+.modal {
+  position: fixed; /* 画面全体に固定 */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  background: rgba(0, 0, 0, 0.5); /* 背景を暗くする */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999; /* 既存画面より必ず上 */
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 30px 40px;
+  border-radius: 10px;
+  text-align: center;
 }

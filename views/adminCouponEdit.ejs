@@ -48,14 +48,14 @@
       <input
         type="date"
         name="start_date"
-        value="<%= coupon.start_date.toISOString().split('T')[0] %>"
+        value="<%= coupon.start_date_str %>"
         required
       />
       <label for="">配布終了日</label>
       <input
         type="date"
         name="finish_date"
-        value="<%= coupon.finish_date.toISOString().split('T')[0] %>"
+        value="<%= coupon.finish_date_str %>"
         required
       />
       <label for="">写真ファイル</label>
