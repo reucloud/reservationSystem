@@ -84,6 +84,13 @@ app.get("/adminCoupons", (req, res) => {
 
 app.get("/salesManagement", (req, res) => {
   const id = req.session.userId;
+  const month = req.query.month;
+
+  const selectedMonth = month || new Date().toISOString().slice(0, 7); // 今月
+
+  const startDate = `${selectedMonth}-01`;
+  const endDate = `${selectedMonth}-31`; // 月末ざっくりでOK（MySQLが調整）
+
   if (!id) return res.redirect("/");
 
   // 更新時間更新
@@ -107,36 +114,90 @@ app.get("/salesManagement", (req, res) => {
               SUM(amount) AS total_sales
             FROM reservations
             WHERE status != 'キャンセル'
+              AND reserve_day BETWEEN ? AND ?
           `;
 
           // サービス別ランキング
-          const rankingSql = `
+          const resourceRankingSql = `
             SELECT
               resources.name AS resource_name,
-              SUM(reservations.amount) AS total_amount,
-              COUNT(*) AS count
+              SUM(reservations.amount) AS total_amount
             FROM reservations
             JOIN resources ON reservations.resource_id = resources.id
             WHERE reservations.status != 'キャンセル'
+              AND reservations.reserve_day BETWEEN ? AND ?
             GROUP BY resources.id
             ORDER BY total_amount DESC
           `;
 
-          connection.query(salesSql, (error, salesResult) => {
-            if (error) throw error;
-            const totalSales = salesResult[0].total_sales || 0;
+          // 日別売上（折れ線グラフ用）
+          const dailySalesSql = `
+            SELECT
+              DATE(reserve_day) AS date,
+              SUM(amount) AS total
+            FROM reservations
+            WHERE status != 'キャンセル'
+              AND reserve_day BETWEEN ? AND ?
+            GROUP BY DATE(reserve_day)
+            ORDER BY DATE(reserve_day)
+          `;
 
-            connection.query(rankingSql, (error, rankingResult) => {
+          //ユーザー別ランキング
+          const userRankingSql = `
+          SELECT
+            users.id,
+            users.name AS user_name,
+            SUM(reservations.amount) AS total_amount
+          FROM reservations
+          JOIN users ON reservations.user_id = users.id
+          WHERE reservations.status != 'キャンセル'
+            AND reservations.reserve_day BETWEEN ? AND ?
+          GROUP BY users.id, users.name
+          ORDER BY total_amount DESC
+          `;
+
+          connection.query(
+            salesSql,
+            [startDate, endDate],
+            (error, salesResult) => {
               if (error) throw error;
+              const totalSales = salesResult[0].total_sales || 0;
 
-              res.render("salesManagement", {
-                users: user,
-                totalSales,
-                ranking: rankingResult || [],
-                id: id,
-              });
-            });
-          });
+              connection.query(
+                resourceRankingSql,
+                [startDate, endDate],
+                (error, resourceRankingResult) => {
+                  if (error) throw error;
+
+                  connection.query(
+                    dailySalesSql,
+                    [startDate, endDate],
+                    (error, dailySalesResult) => {
+                      if (error) throw error;
+
+                      connection.query(
+                        userRankingSql,
+                        [startDate, endDate],
+                        (error, userRankingResult) => {
+                          if (error) throw error;
+
+                          res.render("salesManagement", {
+                            users: user,
+                            totalSales,
+                            ranking: resourceRankingResult || [],
+                            dailySales: dailySalesResult || [],
+                            userRanking: userRankingResult || [],
+                            selectedMonth,
+                            id: id,
+                          });
+                        }
+                      );
+                    }
+                  );
+                }
+              );
+            }
+          );
         }
       );
     }
@@ -692,7 +753,7 @@ SELECT
 FROM reservations
 JOIN users ON reservations.user_id = users.id
 JOIN resources ON reservations.resource_id = resources.id
-ORDER BY reservations.reserve_day, reservations.start_time
+ORDER BY reservations.reserve_day DESC, reservations.start_time DESC
 `;
   }
 
@@ -756,10 +817,10 @@ app.get("/adminTop/edit/:id", (req, res) => {
     });
   });
 });
-app.post("/adminTop/edit/:id", (req, res) => {
+app.post("/adminTop/edit/:id", async (req, res) => {
   const editId = req.params.id;
-
   const {
+    status,
     coupon_code,
     reserve_day,
     start_time,
@@ -767,29 +828,72 @@ app.post("/adminTop/edit/:id", (req, res) => {
     amount,
     memo,
     resource_id,
-    status,
   } = req.body;
 
-  const resource = Number(resource_id);
+  try {
+    // ① 対象予約を取得
+    const [rows] = await connection
+      .promise()
+      .query(
+        "SELECT user_id, amount, status, is_charged FROM reservations WHERE id = ?",
+        [editId]
+      );
 
-  connection.query(
-    "UPDATE reservations SET resource_id = ?, coupon_code = ?, reserve_day = ?, start_time = ?, usage_time = ?, amount = ?, status = ?, memo = ? WHERE id = ?",
-    [
-      resource,
-      coupon_code,
-      reserve_day,
-      start_time,
-      usage_time,
-      amount,
-      status,
-      memo,
-      editId,
-    ],
-    (error, results) => {
-      if (error) throw error;
-      res.redirect("/adminTop");
+    if (rows.length === 0) {
+      return res.redirect("/adminTop");
     }
-  );
+
+    const reservation = rows[0];
+
+    // ② 「承認済」になった瞬間だけ回収（提供済では回収しない）
+    if (reservation.is_charged === 0) {
+      // チャージ減額
+      await connection
+        .promise()
+        .query("UPDATE users SET charge = charge - ? WHERE id = ?", [
+          reservation.amount,
+          reservation.user_id,
+        ]);
+
+      // 回収済フラグON
+      await connection
+        .promise()
+        .query("UPDATE reservations SET is_charged = 1 WHERE id = ?", [editId]);
+    }
+
+    // ③ 予約情報更新（承認済 → 提供済 では charge を触らない）
+    await connection.promise().query(
+      `
+        UPDATE reservations
+        SET
+          resource_id = ?,
+          coupon_code = ?,
+          reserve_day = ?,
+          start_time = ?,
+          usage_time = ?,
+          amount = ?,
+          status = ?,
+          memo = ?
+        WHERE id = ?
+        `,
+      [
+        Number(resource_id),
+        coupon_code,
+        reserve_day,
+        start_time,
+        usage_time,
+        amount,
+        status,
+        memo,
+        editId,
+      ]
+    );
+
+    res.redirect("/adminTop");
+  } catch (err) {
+    console.error(err);
+    res.redirect("/adminTop");
+  }
 });
 
 app.listen(3000, "0.0.0.0", () => {

@@ -106,7 +106,6 @@
 
   document.getElementById("openModal").addEventListener("click", () => {
     const value = Number(chargeInput.value) || 0;
-    if (value <= 0) return alert("金額を入力してください");
     confirmAmount.textContent = value;
     confirmChargeInput.value = value;
     modal.classList.remove("hidden");

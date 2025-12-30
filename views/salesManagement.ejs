@@ -15,7 +15,7 @@
       <%- include("header") %>
       <div class="allwrapper">
         <div class="time">
-          <h2>管理者トップ</h2>
+          <h2>売上管理</h2>
           <div class="time-right">
             <h4>
               <% if (users && users.updated_at) { const d = new
@@ -30,7 +30,146 @@
             </h4>
           </div>
         </div>
+
+        <fieldset class="monthPrint">
+          <h3><%= Number(selectedMonth.split('-')[1]) %>月売上詳細</h3>
+          <form method="GET" action="/salesManagement">
+            <input type="month" name="month" value="<%= selectedMonth %>" />
+            <button type="submit">表示</button>
+          </form>
+        </fieldset>
+
+        <div class="salesContents">
+          <div class="left">
+            <fieldset class="sales">
+              <table>
+                <thead>
+                  <tr>
+                    <th>今月の売上</th>
+                    <th>前月比</th>
+                    <th>目標達成率</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>￥<%= totalSales %></td>
+                    <td>
+                      <%= Math.floor(((totalSales/totalSales) * 100) -100) %>%
+                    </td>
+                    <td><%= Math.floor((totalSales/1500) * 100) %> %</td>
+                  </tr>
+                </tbody>
+              </table>
+            </fieldset>
+            <fieldset class="salesGraph">
+              <div>
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <canvas id="salesChart"></canvas>
+              </div>
+            </fieldset>
+          </div>
+          <div class="right">
+            <fieldset class="serviceRank">
+              <h3>サービス別ランキング</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>順位</th>
+                    <th>項目</th>
+                    <th>売上</th>
+                    <th>構成比</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% ranking.forEach((r, index) => {%>
+                  <tr>
+                    <td><%= index + 1 %></td>
+                    <td><%= r.resource_name %></td>
+                    <td><%= r.total_amount.toLocaleString() %></td>
+                    <td>
+                      <%= totalSales ? Math.round((r.total_amount / totalSales)
+                      * 100) : 0 %>%
+                    </td>
+                  </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </fieldset>
+            <fieldset class="userRank">
+              <h3>ユーザー別ランキング</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>順位</th>
+                    <th>項目</th>
+                    <th>売上</th>
+                    <th>構成比</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% userRanking.forEach((r, index) => {%>
+                  <tr>
+                    <td><%= index + 1 %></td>
+                    <td><%= r.user_name %></td>
+                    <td><%= r.total_amount.toLocaleString() %></td>
+                    <td>
+                      <%= totalSales ? Math.round((r.total_amount / totalSales)
+                      * 100) : 0 %>%
+                    </td>
+                  </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </fieldset>
+          </div>
+        </div>
       </div>
     </div>
+
+    <script>
+              const dailySales = <%- JSON.stringify(dailySales || []) %>;
+              console.log("dailySales:", dailySales);
+              // ↑ EJSで配列をJSに安全に渡す
+
+              if (dailySales.length > 0) {
+                const labels = dailySales.map((d) =>
+          new Date(d.date).toISOString().slice(0, 10)
+        );
+                const data = dailySales.map((d) => d.total);
+
+                const ctx = document.getElementById("salesChart").getContext("2d");
+                new Chart(ctx, {
+                  type: "line",
+                  data: {
+                    labels,
+                    datasets: [
+                      {
+                        label: "日別売上",
+                        data,
+                        tension: 0,
+                      },
+                    ],
+                  },
+                  options: {
+                    responsive: true,
+      maintainAspectRatio: false, // ★これが無いのが原因
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "日付",
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: "売上金額",
+              },
+            },
+          },
+        },
+                });
+              }
+    </script>
   </body>
 </html>

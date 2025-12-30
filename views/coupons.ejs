@@ -26,11 +26,13 @@
         <div class="couponPhoto"></div>
         <div class="couponDetails">
           <ul>
-            <% coupons.forEach(coupon => {%> <% const now = new Date(); const
-            start = new Date(coupon.start_date); const end = new
-            Date(coupon.finish_date); const format = (d) =>
+            <% let hasAvailableCoupon = false; %> <% coupons.forEach(coupon =>
+            {%> <% const now = new Date(); const start = new
+            Date(coupon.start_date); const end = new Date(coupon.finish_date);
+            const format = (d) =>
             `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-            %> <% if(coupon.is_open && start <= now && now <= end){ %>
+            %> <% if(coupon.is_open && start <= now && now <= end){ %> <%
+            hasAvailableCoupon = true; %>
             <fieldset>
               <img src="/images/<%= coupon.photo %>" alt="" />
               <li>クーポンコード: <%= coupon.code %></li>
@@ -38,7 +40,9 @@
               <li>期限: <%= format(end) %></li>
               <li>対象サービス: <%= coupon.service %></li>
             </fieldset>
-            <% }}) %>
+            <% }}) %> <% if (!hasAvailableCoupon) { %>
+            <h3>使用可能なクーポンはありません</h3>
+            <% } %>
           </ul>
         </div>
       </div>
