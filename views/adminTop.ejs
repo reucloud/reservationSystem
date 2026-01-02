@@ -33,22 +33,26 @@
         <div class="wrapper">
           <div class="vertical">
             <div class="reserveButton">
-              <div class="todaySchedules">
+              <a href="/adminTop?range=today" class="todaySchedules linkBox">
                 <span class="fa fa-clock-o"></span>
-                <a href="/adminTop?range=today">
-                  Today's Schedules<br />本日の予約 click!
-                </a>
-              </div>
-              <div class="allSchedules">
+                <span> Today's Schedules<br />本日の予約 click! </span>
+              </a>
+              <a href="/adminTop?range=all" class="allSchedules linkBox">
                 <span class="fa fa-list"></span>
-                <a href="/adminTop?range=all">
-                  Today's Reserve List<br />全ての予約 click!
-                </a>
-              </div>
+                <span> Today's Reserve List<br />全ての予約 click! </span>
+              </a>
             </div>
             <div class="reserveCheck">
               <div class="reserveCheckTop">
                 <h3>予約確認</h3>
+                <form method="get" action="/adminTop">
+                  <label>
+                    <input type="checkbox" name="excludeProvided" <%= range ===
+                    'today' ? 'disabled' : '' %> value="1" <%= excludeProvided ?
+                    "checked" : "" %> onchange="this.form.submit()" />
+                    提供済を除外
+                  </label>
+                </form>
               </div>
               <div class="reserveCheckContents">
                 <table>

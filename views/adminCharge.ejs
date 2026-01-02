@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <link rel="stylesheet" href="/public/style.css" />
+  </head>
+  <body>
+    <%- include("header") %>
+    <div class="userAllWrapper">
+      <div class="time">
+        <h2>チャージ画面</h2>
+        <div class="time-right">
+          <h4>
+            <%= (() => { const d = new Date(users.updated_at); const yyyy =
+            d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2,
+            '0'); const dd = String(d.getDate()).padStart(2, '0'); const hh =
+            String(d.getHours()).padStart(2, '0'); const mi =
+            String(d.getMinutes()).padStart(2, '0'); const ss =
+            String(d.getSeconds()).padStart(2, '0'); return `${yyyy}/${mm}/${dd}
+            ${hh}:${mi}:${ss}`; })() %> 時点
+          </h4>
+        </div>
+      </div>
+      <div class="nowPoint">
+        <h3>チャージ金額：<span id="chargeAmount">---</span> 円</h3>
+      </div>
+
+      <div class="userSelect">
+        <h3>ユーザー選択</h3>
+        <select id="userSelect">
+          <option value="">ユーザーを選択</option>
+          <% userList.forEach(u => { %>
+          <option value="<%= u.id %>"><%= u.name %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="chargeButton">
+        <button data-amount="500">500円<br />チャージ</button>
+        <button data-amount="1000">1000円<br />チャージ</button>
+        <button data-amount="1500">1500円<br />チャージ</button>
+        <button data-amount="2000">2000円<br />チャージ</button>
+        <button data-amount="2500">2500円<br />チャージ</button>
+      </div>
+      <div class="chargeAmount">
+        <div>
+          <h3>チャージ金額</h3>
+          <div class="amount">
+            <form
+              id="chargeForm"
+              class="chargeInput"
+              action="/charge"
+              method="post"
+            >
+              <input type="hidden" id="targetUserId" name="targetUserId" />
+              <input
+                type="number"
+                id="chargeInput"
+                name="charge"
+                onkeydown="return event.key !== 'Enter';"
+              />
+              <h3 class="yen">円</h3>
+              <input type="button" id="openModal" value="チャージ確認" />
+              <input type="button" id="resetButton" value="リセット" />
+            </form>
+          </div>
+        </div>
+      </div>
+      <!-- チャージ確認モーダル -->
+      <div id="chargeModal" class="modal hidden">
+        <div class="modal-content">
+          <h3>チャージ確認</h3>
+          <p>チャージ金額<span id="confirmAmount"></span> 円</p>
+          <form action="/charge" method="post" onsubmit="return false;">
+            <input type="hidden" name="targetUserId" id="confirmTargetUserId" />
+            <input type="hidden" name="charge" id="confirmChargeInput" />
+            <input
+              type="password"
+              id="chargePassword"
+              placeholder="パスワード"
+              required
+            />
+            <p id="passwordError" style="color: red; display: none">
+              パスワードが違います
+            </p>
+            <button type="button" id="confirmSubmit">確定</button>
+            <button type="button" id="cancelModal">キャンセル</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  const modal = document.getElementById("chargeModal");
+  const confirmAmount = document.getElementById("confirmAmount");
+  const confirmChargeInput = document.getElementById("confirmChargeInput");
+  const cancelModal = document.getElementById("cancelModal");
+
+  const buttons = document.querySelectorAll(".chargeButton button");
+  const chargeInput = document.getElementById("chargeInput");
+  const resetButton = document.getElementById("resetButton");
+
+  const PASSWORD = "reucloud1412"; // 正しいパスワード（仮）
+  const passwordInput = document.getElementById("chargePassword");
+  const passwordError = document.getElementById("passwordError");
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const amount = Number(button.dataset.amount); // 500など
+      const current = Number(chargeInput.value) || 0;
+
+      chargeInput.value = current + amount;
+    });
+  });
+
+  resetButton.addEventListener("click", () => {
+    // chargeInput.value = "";
+    // 0にしたい場合は ↓
+    chargeInput.value = 0;
+  });
+
+  document.getElementById("openModal").addEventListener("click", () => {
+    const value = Number(chargeInput.value) || 0;
+    confirmAmount.textContent = value;
+    confirmChargeInput.value = value;
+    document.getElementById("confirmTargetUserId").value =
+      document.getElementById("targetUserId").value;
+    modal.classList.remove("hidden");
+  });
+
+  cancelModal.addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
+
+  document.getElementById("confirmSubmit").addEventListener("click", () => {
+    const inputPassword = passwordInput.value;
+
+    if (inputPassword !== PASSWORD) {
+      passwordError.style.display = "block";
+      return;
+    }
+
+    passwordError.style.display = "none";
+    confirmChargeInput.form.submit();
+  });
+
+  passwordInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+    }
+  });
+
+  document
+    .getElementById("userSelect")
+    .addEventListener("change", async function () {
+      const userId = this.value;
+      document.getElementById("targetUserId").value = userId;
+      if (!userId) return;
+
+      const res = await fetch(`/admin/user-info/${userId}`);
+      const data = await res.json();
+
+      document.getElementById("chargeAmount").textContent = data.charge;
+      document.getElementById("updatedTime").textContent = data.updated_at;
+    });
+</script>

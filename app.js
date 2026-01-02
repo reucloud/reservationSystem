@@ -427,6 +427,8 @@ app.post("/adminNews/delete/:id", (req, res) => {
 
 app.get("/charge", (req, res) => {
   const id = req.session.userId;
+  const role = req.session.role;
+
   connection.query(
     "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
     [id],
@@ -438,10 +440,14 @@ app.get("/charge", (req, res) => {
         (error, results) => {
           if (error) throw error;
           const user = results[0];
-          res.render("charge", {
-            users: user,
-            id: id,
-          });
+          if (role === "admin") {
+            res.redirect("/adminCharge");
+          } else {
+            res.render("charge", {
+              users: user,
+              id: id,
+            });
+          }
         }
       );
     }
@@ -449,12 +455,16 @@ app.get("/charge", (req, res) => {
 });
 
 app.post("/charge", (req, res) => {
-  const id = req.session.userId;
+  const targetUserId = req.body.targetUserId;
   const charge = Number(req.body.charge);
+
+  if (!targetUserId) {
+    return res.redirect("/adminCharge");
+  }
 
   connection.query(
     "UPDATE users SET charge =  charge + ? WHERE id = ?",
-    [charge, id],
+    [charge, targetUserId],
     (error, results) => {
       if (error) throw error;
       res.redirect("/charge");
@@ -495,39 +505,50 @@ app.get("/coupons", (req, res) => {
 
 app.get("/top", (req, res) => {
   const id = req.session.userId;
-  if (!id) return res.redirect("/"); // ログインしていなければ戻す
+  if (!id) return res.redirect("/");
 
-  // DB上の更新時間を更新
+  const month = req.query.month || new Date().toISOString().slice(0, 7);
+  const startDate = `${month}-01`;
+  const endDate = `${month}-31`;
+
   connection.query(
     "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
     [id],
     (error) => {
       if (error) throw error;
 
-      // 更新後にユーザー情報を取得して画面表示
       connection.query(
         "SELECT * FROM users WHERE id = ?",
         [id],
         (error, userresults) => {
           if (error) throw error;
           const user = userresults[0];
+
           connection.query(
             "SELECT * FROM news ORDER BY create_at DESC",
             (error, newsresults) => {
               if (error) throw error;
               const news = newsresults;
+
               connection.query(
-                "SELECT * FROM reservations WHERE user_id = ?",
-                [id],
+                `
+                SELECT *
+                FROM reservations
+                WHERE user_id = ?
+                  AND reserve_day BETWEEN ? AND ?
+                ORDER BY reserve_day DESC, start_time DESC
+                `,
+                [id, startDate, endDate],
                 (error, reservations) => {
                   if (error) throw error;
-                  const reserve = reservations;
+
                   res.render("top", {
                     users: user,
                     news: news || [],
-                    reservation: reserve || [],
+                    reservation: reservations || [],
                     id: id,
                     couponError: false,
+                    selectedMonth: month,
                   });
                 }
               );
@@ -553,6 +574,7 @@ app.post("/login", (req, res) => {
 
       if (results.length > 0 && password === results[0].password) {
         req.session.userId = results[0].id;
+        req.session.role = results[0].role;
 
         if (results[0].role === "admin") {
           return res.redirect("/adminTop");
@@ -627,58 +649,79 @@ app.post("/newUser", (req, res) => {
 
 app.post("/reservation", async (req, res) => {
   const id = req.session.userId;
+  if (!id) return res.redirect("/");
+
   const { reserve_day, start_time, usage_time, coupon, memo } = req.body;
   const resource = req.body.resource === "massage" ? 1 : 2;
-  const user_id = req.session.userId;
+  const month = new Date().toISOString().slice(0, 7);
+
   const amount = await AmountCheck(resource, usage_time, coupon);
+
+  // ① updated_at 更新
   connection.query(
     "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
     [id],
     (error) => {
       if (error) throw error;
-      if (amount === -1) {
-        // クーポン無効の場合、EJS にフラグを渡して表示
-        connection.query(
-          "SELECT * FROM news ORDER BY create_at DESC",
-          (error, newsresults) => {
-            if (error) throw error;
-            const news = newsresults;
+
+      // ② users を必ず取得
+      connection.query(
+        "SELECT * FROM users WHERE id = ?",
+        [id],
+        (error, userResults) => {
+          if (error) throw error;
+          const user = userResults[0];
+
+          if (amount === -1) {
+            // ③ クーポン無効時
             connection.query(
-              "SELECT * FROM reservations WHERE user_id = ?",
-              [user_id],
-              (error, reservations) => {
+              "SELECT * FROM news ORDER BY create_at DESC",
+              (error, newsResults) => {
                 if (error) throw error;
-                res.render("top", {
-                  users: { id: user_id }, // 必要に応じて正しい user 情報を取得
-                  news: news || [],
-                  reservation: reservations || [],
-                  id: user_id,
-                  couponError: true, // ← ここでフラグ
-                });
+
+                connection.query(
+                  "SELECT * FROM reservations WHERE user_id = ?",
+                  [id],
+                  (error, reservations) => {
+                    if (error) throw error;
+
+                    res.render("top", {
+                      users: user,
+                      news: newsResults || [],
+                      reservation: reservations || [],
+                      id,
+                      couponError: true,
+                      selectedMonth: month,
+                    });
+                  }
+                );
+              }
+            );
+          } else {
+            // ④ 正常予約
+            connection.query(
+              `INSERT INTO reservations
+               (user_id, reserve_day, start_time, usage_time, resource_id, coupon_code, memo, amount, status)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [
+                id,
+                reserve_day,
+                start_time,
+                usage_time,
+                resource,
+                coupon,
+                memo,
+                amount,
+                "承認前",
+              ],
+              (error) => {
+                if (error) throw error;
+                res.redirect("/top");
               }
             );
           }
-        );
-      } else {
-        connection.query(
-          "INSERT INTO reservations (user_id, reserve_day, start_time, usage_time, resource_id, coupon_code, memo, amount, status) VALUES (?,?,?,?,?,?,?,?,?)",
-          [
-            user_id,
-            reserve_day,
-            start_time,
-            usage_time,
-            resource,
-            coupon,
-            memo,
-            amount,
-            "承認前",
-          ],
-          (error) => {
-            if (error) throw error;
-            res.redirect("/top");
-          }
-        );
-      }
+        }
+      );
     }
   );
 });
@@ -710,11 +753,11 @@ async function AmountCheck(resource, usage_time, couponCode) {
     today < new Date(coupon.start_date) ||
     today > new Date(coupon.finish_date)
   ) {
-    return Math.floor(amount);
+    return -1;
   }
 
   const services = coupon.service.split(",");
-  if (!services.includes(name)) return Math.floor(amount);
+  if (!services.includes(name)) return -1;
 
   if (coupon.type === "yen") amount -= coupon.discount;
   if (coupon.type === "percent") amount *= 1 - coupon.discount / 100;
@@ -727,6 +770,7 @@ async function AmountCheck(resource, usage_time, couponCode) {
 app.get("/adminTop", (req, res) => {
   const id = req.session.userId;
   const range = req.query.range;
+  const excludeProvided = req.query.excludeProvided === "1";
   let reservationSql = "";
   if (!id) return res.redirect("/"); // ログインしていなければ戻す
 
@@ -741,6 +785,7 @@ FROM reservations
 JOIN users ON reservations.user_id = users.id
 JOIN resources ON reservations.resource_id = resources.id
 WHERE DATE(reservations.reserve_day) = CURDATE()
+${excludeProvided ? "AND reservations.status != '提供済'" : ""}
 ORDER BY reservations.start_time
 `;
   } else {
@@ -753,6 +798,7 @@ SELECT
 FROM reservations
 JOIN users ON reservations.user_id = users.id
 JOIN resources ON reservations.resource_id = resources.id
+${excludeProvided ? "WHERE reservations.status != '提供済'" : ""}
 ORDER BY reservations.reserve_day DESC, reservations.start_time DESC
 `;
   }
@@ -785,6 +831,8 @@ ORDER BY reservations.reserve_day DESC, reservations.start_time DESC
                   reservation: reserve || [],
                   id: id,
                   couponError: false,
+                  excludeProvided,
+                  range: req.query.range || "",
                 });
               });
             }
@@ -894,6 +942,62 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     console.error(err);
     res.redirect("/adminTop");
   }
+});
+
+app.get("/adminCharge", (req, res) => {
+  const id = req.session.userId;
+  if (!id) return res.redirect("/");
+
+  const updateTimeSql =
+    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+  const loginUserSql = "SELECT * FROM users WHERE id = ?";
+  const userListSql = "SELECT id, name FROM users ORDER BY name";
+
+  connection.query(updateTimeSql, [id], (err) => {
+    if (err) throw err;
+
+    connection.query(loginUserSql, [id], (err, loginUserResults) => {
+      if (err) throw err;
+      const loginUser = loginUserResults[0];
+
+      connection.query(userListSql, (err, userList) => {
+        if (err) throw err;
+
+        res.render("adminCharge", {
+          users: loginUser, // ヘッダー・時間・権限判定用
+          userList: userList, // ドロップダウン用
+        });
+      });
+    });
+  });
+});
+
+app.get("/admin/user-info/:id", (req, res) => {
+  const userId = req.params.id;
+
+  // 表示した時点で「確認時刻」を更新
+  const updateSql = `
+    UPDATE users
+    SET updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `;
+
+  connection.query(updateSql, [userId], (err) => {
+    if (err) return res.status(500).json({ error: err });
+
+    const selectSql = `
+      SELECT charge, 
+             DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') AS updated_at
+      FROM users
+      WHERE id = ?
+    `;
+
+    connection.query(selectSql, [userId], (err, results) => {
+      if (err) return res.status(500).json({ error: err });
+
+      res.json(results[0]);
+    });
+  });
 });
 
 app.listen(3000, "0.0.0.0", () => {

@@ -33,7 +33,7 @@
             <input type="time" name="start_time" required />
 
             <label for="">利用時間</label>
-            <input type="text" name="usage_time" required />
+            <input type="number" name="usage_time" min="1" required />
 
             <label for="">内容選択</label>
             <select name="resource" required>
@@ -43,8 +43,8 @@
 
             <label for="">クーポンコード</label>
             <input type="text" name="coupon" />
-            <% if(couponError){ %>
-            <p>クーポンコードが正しくありません</p>
+            <% if (couponError) { %>
+            <p class="error">このクーポンは利用できません</p>
             <% } %>
 
             <label for="">備考</label>
@@ -79,6 +79,11 @@
           <div class="reserveList">
             <div class="reservationTop">
               <h3>予約一覧</h3>
+
+              <form method="get" action="/top" class="monthSelect">
+                <input type="month" name="month" value="<%= selectedMonth %>" />
+                <button type="submit">表示</button>
+              </form>
             </div>
             <div class="reservationContents">
               <table>

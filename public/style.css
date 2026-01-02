@@ -183,15 +183,78 @@ header a {
 .reservationTop h3,
 .reserveCheckTop h3 {
   color: white;
-  background-color: rgb(0, 81, 161);
+  /* background-color: rgb(0, 81, 161); */
   padding: 10px 10px 10px 20px;
   margin: 0;
   text-align: left;
   font-size: 16px;
 }
 
+.reservationTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgb(0, 81, 161);
+  padding-right: 16px;
+  color: #fff;
+}
+
+.reservationTop h3 {
+  margin: 0;
+}
+
+.monthSelect {
+  display: flex;
+  align-items: center;
+}
+
+.monthSelect input,
+.monthSelect button {
+  font-size: 14px;
+}
+
+.monthSelect button {
+  margin-left: 8px;
+}
+
+.editBtn {
+  padding: 4px 10px;
+  /* background-color: #0b2c4d; */
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
 .newsContents,
 .reservationContents {
+  overflow-y: auto;
+}
+
+/* === keep height & enable vertical scroll only === */
+.userNewsList,
+.reserveList,
+.newsContents,
+.reservationContents {
+  min-height: 0;
+}
+
+.userNewsList {
+  display: flex;
+  flex-direction: column;
+}
+
+.newsContents {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.reserveList {
+  display: flex;
+  flex-direction: column;
+}
+
+.reservationContents {
+  flex: 1;
   overflow-y: auto;
 }
 
@@ -222,13 +285,13 @@ header a {
   width: 50%;
   text-align: center;
 }
-.reserveButton .todaySchedules span {
-  font-size: 28px;
+.reserveButton .todaySchedules span,
+.reserveButton .allSchedules span {
+  font-size: 27px;
   color: white;
   margin-bottom: 8px;
 }
 .reserveButton .todaySchedules a {
-  font-size: 23px;
   color: white;
   text-decoration: none;
 }
@@ -245,11 +308,7 @@ header a {
   width: 50%;
   text-align: center;
 }
-.reserveButton .allSchedules span {
-  font-size: 30px;
-  color: white;
-  margin-bottom: 8px;
-}
+
 .reserveButton .allSchedules a {
   font-size: 23px;
   color: white;
@@ -265,6 +324,27 @@ header a {
 }
 .reserveCheckTop {
   height: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 左右に分ける */
+  background-color: rgb(0, 81, 161);
+  margin-top: 20px;
+  padding-right: 20px;
+}
+
+/* 予約確認チェックボックス */
+.reserveCheckTop .checkArea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-size: 14px;
+}
+
+.reserveCheckTop .checkArea input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 .reserveCheckContents {
   height: 100%;
@@ -274,8 +354,10 @@ header a {
   }
 }
 .reserveCheckTop h3 {
-  margin-top: 20px;
-  text-align: left;
+  margin: 0;
+  color: white;
+  padding: 10px 0 10px 20px;
+  font-size: 16px;
 }
 .reserveCheckContents th,
 .reserveCheckContents td {
@@ -444,10 +526,16 @@ fieldset {
   }
 }
 .salesContents .left .salesGraph {
-  flex: 1;
-  display: flex;
-  position: relative;
+  height: 300px; /* グラフの縦幅を固定 */
+  position: relative; /* canvas の基準 */
   margin: 0 20px 20px 0;
+  overflow: hidden;
+}
+
+.salesContents .left .salesGraph canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 .salesContents .right {
   width: 40%;
@@ -495,8 +583,21 @@ fieldset {
   font-size: 16px;
 }
 
-/* salesChart canvas sizing */
 #salesChart {
   width: 100% !important;
   height: 100% !important;
+}
+
+/* # --- Added for linkBox style --- */
+.linkBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.linkBox:hover {
+  opacity: 0.85;
 }

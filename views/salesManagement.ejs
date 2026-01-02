@@ -38,10 +38,12 @@
             <button type="submit">表示</button>
           </form>
         </fieldset>
-
         <div class="salesContents">
           <div class="left">
             <fieldset class="sales">
+              <% if (ranking.length === 0){ %>
+              <h3>まだデータがありません</h3>
+              <% }else{ %>
               <table>
                 <thead>
                   <tr>
@@ -60,16 +62,24 @@
                   </tr>
                 </tbody>
               </table>
+              <% } %>
             </fieldset>
             <fieldset class="salesGraph">
+              <% if (ranking.length === 0){ %>
+              <h3>まだデータがありません</h3>
+              <% }else{ %>
               <div>
                 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                 <canvas id="salesChart"></canvas>
               </div>
+              <% } %>
             </fieldset>
           </div>
           <div class="right">
             <fieldset class="serviceRank">
+              <% if (ranking.length === 0){ %>
+              <h3>まだデータがありません</h3>
+              <% }else{ %>
               <h3>サービス別ランキング</h3>
               <table>
                 <thead>
@@ -94,8 +104,12 @@
                   <% }); %>
                 </tbody>
               </table>
+              <% } %>
             </fieldset>
             <fieldset class="userRank">
+              <% if (ranking.length === 0){ %>
+              <h3>まだデータがありません</h3>
+              <% }else{ %>
               <h3>ユーザー別ランキング</h3>
               <table>
                 <thead>
@@ -120,6 +134,7 @@
                   <% }); %>
                 </tbody>
               </table>
+              <% } %>
             </fieldset>
           </div>
         </div>
