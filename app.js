@@ -776,31 +776,31 @@ app.get("/adminTop", (req, res) => {
 
   if (range === "today") {
     reservationSql = `
-SELECT
-  reservations.*,
-  DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
-  users.name AS user_name,
-  resources.name AS resource_name
-FROM reservations
-JOIN users ON reservations.user_id = users.id
-JOIN resources ON reservations.resource_id = resources.id
-WHERE DATE(reservations.reserve_day) = CURDATE()
-${excludeProvided ? "AND reservations.status != '提供済'" : ""}
-ORDER BY reservations.start_time
+    SELECT
+      reservations.*,
+      DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
+      users.name AS user_name,
+      resources.name AS resource_name
+    FROM reservations
+    JOIN users ON reservations.user_id = users.id
+    JOIN resources ON reservations.resource_id = resources.id
+    WHERE DATE(reservations.reserve_day) = CURDATE()
+    ${excludeProvided ? "AND reservations.status != '提供済'" : ""}
+    ORDER BY reservations.start_time
 `;
   } else {
     reservationSql = `
-SELECT
-  reservations.*,
-  DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
-  users.name AS user_name,
-  resources.name AS resource_name
-FROM reservations
-JOIN users ON reservations.user_id = users.id
-JOIN resources ON reservations.resource_id = resources.id
-${excludeProvided ? "WHERE reservations.status != '提供済'" : ""}
-ORDER BY reservations.reserve_day DESC, reservations.start_time DESC
-`;
+    SELECT
+      reservations.*,
+      DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
+      users.name AS user_name,
+      resources.name AS resource_name
+    FROM reservations
+    JOIN users ON reservations.user_id = users.id
+    JOIN resources ON reservations.resource_id = resources.id
+    ${excludeProvided ? "WHERE reservations.status != '提供済'" : ""}
+    ORDER BY reservations.reserve_day DESC, reservations.start_time DESC
+    `;
   }
 
   // DB上の更新時間を更新
@@ -842,6 +842,18 @@ ORDER BY reservations.reserve_day DESC, reservations.start_time DESC
     }
   );
 });
+
+app.post("/adminTop/delete/:id", (req, res) => {
+  const topId = req.params.id;
+
+  const deleteSql = "DELETE FROM reservations WHERE id = ?";
+
+  connection.query(deleteSql, [topId], (error) => {
+    if (error) throw error;
+    res.redirect("/adminTop");
+  });
+});
+
 app.get("/adminTop/edit/:id", (req, res) => {
   const topId = req.params.id;
 
@@ -893,9 +905,17 @@ app.post("/adminTop/edit/:id", async (req, res) => {
 
     const reservation = rows[0];
 
-    // ② 「承認済」になった瞬間だけ回収（提供済では回収しない）
-    if (reservation.is_charged === 0) {
-      // チャージ減額
+    // ② ステータス変更に応じたチャージ調整
+    // ルール:
+    // ・「提供済」になった瞬間だけチャージ減額
+    // ・「提供済」から他ステータスに戻ったらチャージを戻す
+
+    if (
+      reservation.status !== "提供済" &&
+      status === "提供済" &&
+      reservation.is_charged === 0
+    ) {
+      // 提供済になった瞬間 → 減額
       await connection
         .promise()
         .query("UPDATE users SET charge = charge - ? WHERE id = ?", [
@@ -903,10 +923,27 @@ app.post("/adminTop/edit/:id", async (req, res) => {
           reservation.user_id,
         ]);
 
-      // 回収済フラグON
       await connection
         .promise()
         .query("UPDATE reservations SET is_charged = 1 WHERE id = ?", [editId]);
+    }
+
+    if (
+      reservation.status === "提供済" &&
+      status !== "提供済" &&
+      reservation.is_charged === 1
+    ) {
+      // 提供済から戻った瞬間 → 返金
+      await connection
+        .promise()
+        .query("UPDATE users SET charge = charge + ? WHERE id = ?", [
+          reservation.amount,
+          reservation.user_id,
+        ]);
+
+      await connection
+        .promise()
+        .query("UPDATE reservations SET is_charged = 0 WHERE id = ?", [editId]);
     }
 
     // ③ 予約情報更新（承認済 → 提供済 では charge を触らない）

@@ -63,6 +63,7 @@
                       <th>開始時間</th>
                       <th>内容</th>
                       <th>ステータス</th>
+                      <th>削除</th>
                       <th>編集</th>
                     </tr>
                   </thead>
@@ -74,6 +75,15 @@
                       <td><%= reserve.start_time %></td>
                       <td><%= reserve.resource_name %></td>
                       <td><%= reserve.status %></td>
+                      <td>
+                        <form
+                          action="/adminTop/delete/<%= reserve.id %>"
+                          method="post"
+                          onsubmit="return confirm('本当に削除しますか？');"
+                        >
+                          <button type="submit">削除</button>
+                        </form>
+                      </td>
                       <td>
                         <form
                           action="/adminTop/edit/<%= reserve.id %>"
