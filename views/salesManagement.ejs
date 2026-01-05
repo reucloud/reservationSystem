@@ -142,49 +142,49 @@
     </div>
 
     <script>
-              const dailySales = <%- JSON.stringify(dailySales || []) %>;
-              console.log("dailySales:", dailySales);
-              // ↑ EJSで配列をJSに安全に渡す
+                    const dailySales = <%- JSON.stringify(dailySales || []) %>;
+                    console.log("dailySales:", dailySales);
+                    // ↑ EJSで配列をJSに安全に渡す
 
-              if (dailySales.length > 0) {
-                const labels = dailySales.map((d) =>
-          new Date(d.date).toISOString().slice(0, 10)
-        );
-                const data = dailySales.map((d) => d.total);
+                    if (dailySales.length > 0) {
+                      const labels = dailySales.map(d =>
+        new Date(d.date).toLocaleDateString("ja-JP")
+      );
+                      const data = dailySales.map((d) => d.total);
 
-                const ctx = document.getElementById("salesChart").getContext("2d");
-                new Chart(ctx, {
-                  type: "line",
-                  data: {
-                    labels,
-                    datasets: [
-                      {
-                        label: "日別売上",
-                        data,
-                        tension: 0,
-                      },
-                    ],
+                      const ctx = document.getElementById("salesChart").getContext("2d");
+                      new Chart(ctx, {
+                        type: "line",
+                        data: {
+                          labels,
+                          datasets: [
+                            {
+                              label: "日別売上",
+                              data,
+                              tension: 0,
+                            },
+                          ],
+                        },
+                        options: {
+                          responsive: true,
+            maintainAspectRatio: false, // ★これが無いのが原因
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "日付",
+                    },
                   },
-                  options: {
-                    responsive: true,
-      maintainAspectRatio: false, // ★これが無いのが原因
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: "日付",
+                  y: {
+                    title: {
+                      display: true,
+                      text: "売上金額",
+                    },
+                  },
+                },
               },
-            },
-            y: {
-              title: {
-                display: true,
-                text: "売上金額",
-              },
-            },
-          },
-        },
-                });
-              }
+                      });
+                    }
     </script>
   </body>
 </html>

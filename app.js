@@ -536,7 +536,7 @@ app.get("/top", (req, res) => {
                 FROM reservations
                 WHERE user_id = ?
                   AND reserve_day BETWEEN ? AND ?
-                ORDER BY reserve_day DESC, start_time DESC
+                ORDER BY reserve_day ASC, start_time ASC
                 `,
                 [id, startDate, endDate],
                 (error, reservations) => {
@@ -786,7 +786,7 @@ app.get("/adminTop", (req, res) => {
     JOIN resources ON reservations.resource_id = resources.id
     WHERE DATE(reservations.reserve_day) = CURDATE()
     ${excludeProvided ? "AND reservations.status != '提供済'" : ""}
-    ORDER BY reservations.start_time
+    ORDER BY reservations.start_time ASC
 `;
   } else {
     reservationSql = `
@@ -799,7 +799,7 @@ app.get("/adminTop", (req, res) => {
     JOIN users ON reservations.user_id = users.id
     JOIN resources ON reservations.resource_id = resources.id
     ${excludeProvided ? "WHERE reservations.status != '提供済'" : ""}
-    ORDER BY reservations.reserve_day DESC, reservations.start_time DESC
+    ORDER BY reservations.reserve_day ASC, reservations.start_time ASC
     `;
   }
 
