@@ -1,3 +1,4 @@
+@charset "UTF-8";
 html,
 body {
   height: 100%;
@@ -10,21 +11,22 @@ body {
 .login,
 .newUser {
   background-color: rgb(12, 0, 103);
-  h3 {
-    margin: 0;
-    color: white;
-    padding: 18.72px 0px 18.72px 20px;
-    padding-left: 20px;
-  }
+}
+.login h3,
+.newUser h3 {
+  margin: 0;
+  color: white;
+  padding: 18.72px 0px 18.72px 20px;
+  padding-left: 20px;
 }
 
 .input {
   display: flex;
   flex-direction: column;
   width: 40%;
-  input {
-    margin-bottom: 20px;
-  }
+}
+.input input {
+  margin-bottom: 20px;
 }
 
 .infoInput {
@@ -42,56 +44,64 @@ body {
 .pageChange {
   display: flex;
   flex-direction: column;
-  a {
-    color: black;
-    text-decoration: none;
-  }
+}
+.pageChange a {
+  color: black;
+  text-decoration: none;
 }
 
 header li {
   list-style: none;
 }
+
 header {
   display: flex;
   background-color: rgb(12, 0, 103);
   color: white;
   align-items: center;
 }
+
 header ul {
   display: flex;
   margin-left: auto;
 }
+
 header h3 {
   padding-left: 20px;
   font-size: 18px;
 }
+
 header a {
   text-decoration: none;
   color: white;
   padding: 0 15px;
 }
+
 .userAllWrapper {
   padding: 0 10px 0 10px;
 }
+
 .time {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
 }
+
 .time-right {
   display: flex;
   align-items: center;
-  h3,
-  a {
-    text-decoration: none;
-    padding: 0 15px;
-    margin-right: 20px;
-  }
-  a {
-    color: black;
-  }
 }
+.time-right h3,
+.time-right a {
+  text-decoration: none;
+  padding: 0 15px;
+  margin-right: 20px;
+}
+.time-right a {
+  color: black;
+}
+
 .wrapper {
   padding: 0 10px 0 10px;
   display: flex;
@@ -150,22 +160,27 @@ header a {
   width: 100%;
   height: 100%;
 }
+
 .userNewsList {
   height: 40%;
 }
+
 .reserveList {
   height: 60%;
   display: flex;
   flex-direction: column;
   /* flex: 1; ←高さを親の中で自動調整 */
 }
+
 .reservationTop {
   height: 50px; /* 固定高さにする */
   /* padding-bottom: 0; */
 }
+
 .reservationContents {
   flex: 1; /* 残り全部使う */
 }
+
 .reservationContents table {
   width: 100%;
   border-collapse: collapse;
@@ -268,11 +283,12 @@ header a {
 .reserveButton {
   display: flex;
   height: 30%;
-  a {
-    color: white;
-    text-decoration: none;
-  }
 }
+.reserveButton a {
+  color: white;
+  text-decoration: none;
+}
+
 .reserveButton .todaySchedules {
   display: flex;
   flex-direction: column;
@@ -285,16 +301,19 @@ header a {
   width: 50%;
   text-align: center;
 }
+
 .reserveButton .todaySchedules span,
 .reserveButton .allSchedules span {
   font-size: 27px;
   color: white;
   margin-bottom: 8px;
 }
+
 .reserveButton .todaySchedules a {
   color: white;
   text-decoration: none;
 }
+
 .reserveButton .allSchedules {
   display: flex;
   flex-direction: column;
@@ -314,6 +333,7 @@ header a {
   color: white;
   text-decoration: none;
 }
+
 .reserveCheck {
   padding: 0;
   margin: 0;
@@ -322,6 +342,7 @@ header a {
   margin-right: 20px;
   /* border-radius: 5px; */
 }
+
 .reserveCheckTop {
   height: 10%;
   display: flex;
@@ -341,24 +362,27 @@ header a {
   font-size: 14px;
 }
 
-.reserveCheckTop .checkArea input[type="checkbox"] {
+.reserveCheckTop .checkArea input[type=checkbox] {
   width: 16px;
   height: 16px;
   cursor: pointer;
 }
+
 .reserveCheckContents {
   height: 100%;
   background-color: rgb(220, 220, 220);
-  ul {
-    margin: 0;
-  }
 }
+.reserveCheckContents ul {
+  margin: 0;
+}
+
 .reserveCheckTop h3 {
   margin: 0;
   color: white;
   padding: 10px 0 10px 20px;
   font-size: 16px;
 }
+
 .reserveCheckContents th,
 .reserveCheckContents td {
   margin-top: 0;
@@ -368,6 +392,7 @@ header a {
   text-align: left;
   font-size: 14px;
 }
+
 .reserveCheckContents table {
   width: 100%;
   border-collapse: collapse;
@@ -377,6 +402,7 @@ header a {
 .reserveCheckContents td {
   border-bottom: 1px solid #999;
 }
+
 .vertical {
   display: flex;
   flex-direction: column; /* 縦並び */
@@ -384,59 +410,73 @@ header a {
   width: auto;
   align-self: stretch;
 }
+
 .couponsWrapper,
 .newsWrapper {
   display: flex;
   height: 100%;
 }
+
 .couponInputList,
 .newsInputList {
   flex: 1;
 }
+
 .couponsList,
 .newsList {
   /* height: 100%; */
   width: 66%;
-  th,
-  td {
-    width: 15%;
-    text-align: center;
-    font-size: 14px;
-  }
+}
+.couponsList th,
+.couponsList td,
+.newsList th,
+.newsList td {
+  width: 15%;
+  text-align: center;
+  font-size: 14px;
 }
 
 .userAllWrapper {
   height: 80%;
 }
+
 .couponSet,
 .newsSet {
   display: flex;
   flex-direction: column;
-  input,
-  textarea {
-    margin-bottom: 10px;
-  }
 }
+.couponSet input,
+.couponSet textarea,
+.newsSet input,
+.newsSet textarea {
+  margin-bottom: 10px;
+}
+
 fieldset {
   border: 1px solid #999;
 }
+
 .couponsList thead th,
 .newsList thead th {
   border-bottom: 1px solid #999;
 }
+
 .couponsList tbody td,
 .newsList tbody td {
   border-bottom: 1px solid #999;
 }
+
 .couponsList table,
 .newsList table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .chargeButton {
   width: 100%;
   margin-bottom: 20px;
 }
+
 .chargeButton button {
   text-decoration: none;
   color: black;
@@ -453,6 +493,7 @@ fieldset {
 .yen {
   margin: 0px 20px 0 10px;
 }
+
 .couponDetails ul {
   display: flex;
   flex-wrap: wrap;
@@ -461,6 +502,7 @@ fieldset {
   margin: 0;
   justify-content: flex-start;
 }
+
 .couponDetails fieldset {
   width: calc(25% - 24px);
   box-sizing: border-box;
@@ -472,11 +514,13 @@ fieldset {
   flex-direction: column;
   align-items: center;
 }
+
 .couponDetails img {
   width: 80px;
   height: auto;
   margin-bottom: 12px;
 }
+
 .couponDetails li {
   list-style: none;
   font-size: 14px;
@@ -487,13 +531,14 @@ fieldset {
 .couponDetails {
   border-radius: 8px;
 }
+
 .reserveEdit {
   display: flex;
   flex-direction: column;
-  input,
-  select {
-    margin-bottom: 20px;
-  }
+}
+.reserveEdit input,
+.reserveEdit select {
+  margin-bottom: 20px;
 }
 
 .monthPrint {
@@ -513,18 +558,19 @@ fieldset {
   align-items: stretch;
   height: 100%;
 }
+
 .salesContents .left {
   width: 60%;
   display: flex;
   flex-direction: column;
   flex: 1;
-
-  .sales {
-    height: 30%;
-    margin: 0 20px 20px 0;
-    font-size: 15px;
-  }
 }
+.salesContents .left .sales {
+  height: 30%;
+  margin: 0 20px 20px 0;
+  font-size: 15px;
+}
+
 .salesContents .left .salesGraph {
   height: 300px; /* グラフの縦幅を固定 */
   position: relative; /* canvas の基準 */
@@ -537,22 +583,23 @@ fieldset {
   width: 100% !important;
   height: 100% !important;
 }
+
 .salesContents .right {
   width: 40%;
   display: flex;
   flex-direction: column;
   flex: 1;
-  th,
-  td {
-    width: 29%;
-    text-align: left;
-    font-size: 14px;
-  }
-  .serviceRank,
-  .userRank {
-    flex: 1;
-    margin: 0 0 20px 0;
-  }
+}
+.salesContents .right th,
+.salesContents .right td {
+  width: 29%;
+  text-align: left;
+  font-size: 14px;
+}
+.salesContents .right .serviceRank,
+.salesContents .right .userRank {
+  flex: 1;
+  margin: 0 0 20px 0;
 }
 
 /* ===== チャージ確認モーダル（画面に被せる） ===== */
@@ -562,12 +609,10 @@ fieldset {
   left: 0;
   width: 100vw;
   height: 100vh;
-
   background: rgba(0, 0, 0, 0.5); /* 背景を暗くする */
   display: flex;
   align-items: center;
   justify-content: center;
-
   z-index: 9999; /* 既存画面より必ず上 */
 }
 
@@ -601,3 +646,34 @@ fieldset {
 .linkBox:hover {
   opacity: 0.85;
 }
+
+/* ===== スマホ（670px以下） ===== */
+@media (max-width: 670px) {
+  body {
+    font-size: 15px;
+  }
+  .login h3 {
+    font-size: 18px;
+    padding: 16px;
+    text-align: center;
+  }
+  .infoInput {
+    padding: 16px;
+  }
+  .input {
+    width: 100%;
+  }
+  .input input {
+    font-size: 16px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  .pageChange {
+    text-align: center;
+  }
+  .pageChange a {
+    font-size: 14px;
+  }
+}
+
+/*# sourceMappingURL=style.css.map */
