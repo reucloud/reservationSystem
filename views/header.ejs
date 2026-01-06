@@ -1,20 +1,29 @@
 <link rel="stylesheet" href="/style.css" />
-<header>
-  <h3>予約管理</h3>
-  <ul>
-    <% if(users.role === "admin"){ %>
-    <li><a href="/adminTop">管理者トップ</a></li>
-    <!-- <li><a href="/top">お客様画面へ</a></li> -->
-    <li><a href="/salesManagement">売上確認</a></li>
-    <li><a href="/adminCoupons">クーポン設定</a></li>
-    <li><a href="/adminNews">お知らせ設定</a></li>
-    <li><a href="/adminCharge">チャージ額調整</a></li>
-    <li><a href="/">ログアウト</a></li>
-    <% }else{ %>
-    <li><a href="/top">トップ</a></li>
-    <li><a href="/charge">チャージ</a></li>
-    <li><a href="/coupons">クーポン</a></li>
-    <li><a href="/">ログアウト</a></li>
-    <% } %>
-  </ul>
+<header class="header">
+  <!-- ハンバーガーボタン（スマホ用） -->
+  <h3 class="logo">予約管理</h3>
+  <div class="hamburger" id="hamburger">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <nav class="nav" id="nav">
+    <ul>
+      <% if (users.role === "admin") { %>
+      <li><a href="/adminTop">管理者トップ</a></li>
+      <li><a href="/salesManagement">売上確認</a></li>
+      <li><a href="/adminCoupons">クーポン設定</a></li>
+      <li><a href="/adminNews">お知らせ設定</a></li>
+      <li><a href="/adminCharge">チャージ額調整</a></li>
+      <% } else { %>
+      <li><a href="/top">トップ</a></li>
+      <li><a href="">レターボックス</a></li>
+      <li><a href="">予約一覧</a></li>
+      <li><a href="/charge">チャージ</a></li>
+      <li><a href="/coupons">クーポン</a></li>
+      <% } %>
+      <li><a href="/">ログアウト</a></li>
+    </ul>
+  </nav>
 </header>

@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <title>予約管理システム</title>
+    <!-- レスポンシブ対応用 -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"
+    />
     <link rel="stylesheet" href="/public/style.css" />
   </head>
   <body>
@@ -107,6 +112,10 @@
   const passwordInput = document.getElementById("chargePassword");
   const passwordError = document.getElementById("passwordError");
 
+  // ハンバーガーメニュー切り替え
+  const hamburger = document.getElementById("hamburger");
+  const nav = document.getElementById("nav");
+
   buttons.forEach((button) => {
     button.addEventListener("click", () => {
       const amount = Number(button.dataset.amount); // 500など
@@ -166,4 +175,9 @@
       document.getElementById("chargeAmount").textContent = data.charge;
       document.getElementById("updatedTime").textContent = data.updated_at;
     });
+
+  // ハンバーガーメニュー切り替えボタン
+  hamburger.addEventListener("click", () => {
+    nav.classList.toggle("active");
+  });
 </script>

@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <title>予約管理システム</title>
+    <!-- レスポンシブ対応用 -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"
+    />
     <link rel="stylesheet" href="/public/style.css" />
     <link
       rel="stylesheet"
@@ -144,6 +149,11 @@
     <script>
                     const dailySales = <%- JSON.stringify(dailySales || []) %>;
                     console.log("dailySales:", dailySales);
+
+                    // ハンバーガーメニュー切り替え定数
+      const hamburger = document.getElementById("hamburger");
+      const nav = document.getElementById("nav");
+
                     // ↑ EJSで配列をJSに安全に渡す
 
                     if (dailySales.length > 0) {
@@ -185,6 +195,10 @@
               },
                       });
                     }
+                    // ハンバーガーメニュー切り替えボタン
+      hamburger.addEventListener("click", () => {
+        nav.classList.toggle("active");
+      });
     </script>
   </body>
 </html>

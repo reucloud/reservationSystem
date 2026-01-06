@@ -77,6 +77,55 @@ header a {
   padding: 0 15px;
 }
 
+/* PC用CSS */
+.header {
+  display: flex;
+  align-items: center;
+  background-color: rgb(12, 0, 103);
+  color: white;
+  height: 60px;
+}
+
+.logo {
+  padding-left: 20px;
+  font-size: 18px;
+}
+
+.nav {
+  margin-left: auto;
+}
+
+.nav ul {
+  display: flex;
+  /* margin-left: auto; */
+  justify-content: flex-end;
+}
+
+.nav li {
+  list-style: none;
+}
+
+.nav a {
+  color: white;
+  text-decoration: none;
+  padding: 0 15px;
+}
+
+/* ハンバーガーCSS */
+.hamburger {
+  display: none; /* PCでは非表示 */
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 0 20px;
+}
+
+.hamburger span {
+  width: 25px;
+  height: 3px;
+  background: white;
+}
+
 .userAllWrapper {
   padding: 0 10px 0 10px;
 }
@@ -362,7 +411,7 @@ header a {
   font-size: 14px;
 }
 
-.reserveCheckTop .checkArea input[type=checkbox] {
+.reserveCheckTop .checkArea input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
@@ -649,10 +698,12 @@ fieldset {
 
 /* ===== スマホ（670px以下） ===== */
 @media (max-width: 670px) {
+  /* ログイン画面、新規登録画面ここから */
   body {
     font-size: 15px;
   }
-  .login h3 {
+  .login h3,
+  .newUser h3 {
     font-size: 18px;
     padding: 16px;
     text-align: center;
@@ -674,6 +725,164 @@ fieldset {
   .pageChange a {
     font-size: 14px;
   }
-}
 
-/*# sourceMappingURL=style.css.map */
+  /* ユーザートップ画面 */
+  /* ハンバーガー表示 */
+  .hamburger {
+    display: flex;
+    margin-left: auto; /* ← これで右端へ */
+  }
+
+  .userAllWrapper {
+  }
+
+  /* メニューを左からスライド */
+  .nav {
+    position: fixed;
+    top: 0;
+    left: -260px; /* 初期は画面外 */
+    width: 260px;
+    height: 100vh;
+    background-color: rgb(12, 0, 103);
+    transition: left 0.3s ease;
+    z-index: 1000;
+  }
+
+  .nav.active {
+    left: 0; /* 表示 */
+  }
+
+  .nav ul {
+    flex-direction: column;
+    margin: 60px 0 0 0;
+    padding: 0;
+  }
+
+  .nav li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .nav a {
+    display: block;
+    padding: 15px 20px;
+  }
+
+  /* 全体を縦並びにする */
+  .wrapper {
+    padding: 0;
+    flex-direction: column;
+  }
+
+  /* 予約フォーム */
+  .reserve {
+    width: 100%;
+    margin: 0 0 20px 0;
+  }
+
+  .reserve input,
+  .reserve select {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  /* 右側（お知らせ＋予約一覧） */
+  .information {
+    width: 100%;
+    padding: 0;
+  }
+
+  /* お知らせ・予約一覧を縦に */
+  .userNewsList {
+    height: auto;
+    margin-bottom: 20px;
+  }
+
+  .reserveList {
+    height: auto;
+  }
+
+  /* 中身はスクロール */
+  .newsContents,
+  .reservationContents {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  /* 予約一覧の表 */
+  .reservationContents th,
+  .reservationContents td {
+    font-size: 13px;
+  }
+
+  /* 月選択フォーム */
+  .monthSelect {
+    width: 100%;
+  }
+
+  .monthSelect input {
+    width: 70%;
+  }
+
+  .monthSelect button {
+    width: 28%;
+  } /* ユーザートップ画面 */
+
+  /* 全体を縦並びにする */
+  .wrapper {
+    flex-direction: column;
+  }
+
+  /* 予約フォーム */
+  .reserve {
+    width: 100%;
+    margin: 0 0 20px 0;
+  }
+
+  .reserve input,
+  .reserve select {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  /* 右側（お知らせ＋予約一覧） */
+  .information {
+    width: 100%;
+    padding: 0;
+  }
+
+  /* お知らせ・予約一覧を縦に */
+  .userNewsList {
+    height: auto;
+    margin-bottom: 20px;
+  }
+
+  .reserveList {
+    height: auto;
+  }
+
+  /* 中身はスクロール */
+  .newsContents,
+  .reservationContents {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  /* 予約一覧の表 */
+  .reservationContents th,
+  .reservationContents td {
+    font-size: 13px;
+  }
+
+  /* 月選択フォーム */
+  .monthSelect {
+    width: 100%;
+  }
+
+  .monthSelect input {
+    width: 70%;
+  }
+
+  .monthSelect button {
+    width: 28%;
+  }
+}
