@@ -733,9 +733,6 @@ fieldset {
     margin-left: auto; /* ← これで右端へ */
   }
 
-  .userAllWrapper {
-  }
-
   /* メニューを左からスライド */
   .nav {
     position: fixed;
