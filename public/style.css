@@ -888,13 +888,6 @@ fieldset {
   }
 
   /* レターボックス */
-  .wrapper,
-  .userAllWrapper {
-    /* height: 100%; */
-  }
-  .newsTop {
-    /* height: 20%; */
-  }
   .newsContents {
     height: 100px;
   }
