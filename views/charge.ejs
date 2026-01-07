@@ -12,7 +12,7 @@
   </head>
   <body>
     <%- include("header") %>
-    <div class="userAllWrapper">
+    <div class="userAllWrapper" id="userAllWrapper">
       <div class="time">
         <h2>チャージ画面</h2>
         <div class="time-right">
@@ -77,73 +77,80 @@
         </div>
       </div>
     </div>
+    <script>
+      const modal = document.getElementById("chargeModal");
+      const confirmAmount = document.getElementById("confirmAmount");
+      const confirmChargeInput = document.getElementById("confirmChargeInput");
+      const cancelModal = document.getElementById("cancelModal");
+
+      const buttons = document.querySelectorAll(".chargeButton button");
+      const chargeInput = document.getElementById("chargeInput");
+      const resetButton = document.getElementById("resetButton");
+
+      const PASSWORD = "reucloud1412"; // 正しいパスワード（仮）
+      const passwordInput = document.getElementById("chargePassword");
+      const passwordError = document.getElementById("passwordError");
+
+      // ハンバーガーメニュー切り替え定数
+      const hamburger = document.getElementById("hamburger");
+      const nav = document.getElementById("nav");
+      const wrapper = document.getElementById("userAllWrapper");
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const amount = Number(button.dataset.amount); // 500など
+          const current = Number(chargeInput.value) || 0;
+
+          chargeInput.value = current + amount;
+        });
+      });
+
+      resetButton.addEventListener("click", () => {
+        // chargeInput.value = "";
+        // 0にしたい場合は ↓
+        chargeInput.value = 0;
+      });
+
+      document.getElementById("openModal").addEventListener("click", () => {
+        const value = Number(chargeInput.value) || 0;
+        confirmAmount.textContent = value;
+        confirmChargeInput.value = value;
+        modal.classList.remove("hidden");
+      });
+
+      cancelModal.addEventListener("click", () => {
+        modal.classList.add("hidden");
+      });
+
+      document.getElementById("confirmSubmit").addEventListener("click", () => {
+        const inputPassword = passwordInput.value;
+
+        if (inputPassword !== PASSWORD) {
+          passwordError.style.display = "block";
+          return;
+        }
+
+        passwordError.style.display = "none";
+        confirmChargeInput.form.submit();
+      });
+
+      passwordInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+        }
+      });
+
+      // ハンバーガーメニュー切り替えボタン
+      hamburger.addEventListener("click", () => {
+        nav.classList.toggle("active");
+      });
+
+      // メニュー内どこをクリックしても閉じる
+      wrapper.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() !== "a") {
+          nav.classList.remove("active");
+        }
+      });
+    </script>
   </body>
 </html>
-
-<script>
-  const modal = document.getElementById("chargeModal");
-  const confirmAmount = document.getElementById("confirmAmount");
-  const confirmChargeInput = document.getElementById("confirmChargeInput");
-  const cancelModal = document.getElementById("cancelModal");
-
-  const buttons = document.querySelectorAll(".chargeButton button");
-  const chargeInput = document.getElementById("chargeInput");
-  const resetButton = document.getElementById("resetButton");
-
-  const PASSWORD = "reucloud1412"; // 正しいパスワード（仮）
-  const passwordInput = document.getElementById("chargePassword");
-  const passwordError = document.getElementById("passwordError");
-
-  // ハンバーガーメニュー切り替え定数
-  const hamburger = document.getElementById("hamburger");
-  const nav = document.getElementById("nav");
-
-  buttons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const amount = Number(button.dataset.amount); // 500など
-      const current = Number(chargeInput.value) || 0;
-
-      chargeInput.value = current + amount;
-    });
-  });
-
-  resetButton.addEventListener("click", () => {
-    // chargeInput.value = "";
-    // 0にしたい場合は ↓
-    chargeInput.value = 0;
-  });
-
-  document.getElementById("openModal").addEventListener("click", () => {
-    const value = Number(chargeInput.value) || 0;
-    confirmAmount.textContent = value;
-    confirmChargeInput.value = value;
-    modal.classList.remove("hidden");
-  });
-
-  cancelModal.addEventListener("click", () => {
-    modal.classList.add("hidden");
-  });
-
-  document.getElementById("confirmSubmit").addEventListener("click", () => {
-    const inputPassword = passwordInput.value;
-
-    if (inputPassword !== PASSWORD) {
-      passwordError.style.display = "block";
-      return;
-    }
-
-    passwordError.style.display = "none";
-    confirmChargeInput.form.submit();
-  });
-
-  passwordInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-    }
-  });
-
-  // ハンバーガーメニュー切り替えボタン
-  hamburger.addEventListener("click", () => {
-    nav.classList.toggle("active");
-  });
-</script>

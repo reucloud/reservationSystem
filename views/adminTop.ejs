@@ -131,10 +131,18 @@
       // ハンバーガーメニュー切り替え定数
       const hamburger = document.getElementById("hamburger");
       const nav = document.getElementById("nav");
+      const wrapper = document.getElementById("userAllWrapper");
 
       // ハンバーガーメニュー切り替えボタン
       hamburger.addEventListener("click", () => {
         nav.classList.toggle("active");
+      });
+
+      // メニュー内どこをクリックしても閉じる
+      wrapper.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() !== "a") {
+          nav.classList.remove("active");
+        }
       });
     </script>
   </body>

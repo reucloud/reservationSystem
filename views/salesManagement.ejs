@@ -147,37 +147,38 @@
     </div>
 
     <script>
-                    const dailySales = <%- JSON.stringify(dailySales || []) %>;
-                    console.log("dailySales:", dailySales);
+      const dailySales = <%- JSON.stringify(dailySales || []) %>;
+      console.log("dailySales:", dailySales);
 
-                    // ハンバーガーメニュー切り替え定数
+      // ハンバーガーメニュー切り替え定数
       const hamburger = document.getElementById("hamburger");
       const nav = document.getElementById("nav");
+      const wrapper = document.getElementById("userAllWrapper");
 
-                    // ↑ EJSで配列をJSに安全に渡す
-
-                    if (dailySales.length > 0) {
-                      const labels = dailySales.map(d =>
+      // ↑ EJSで配列をJSに安全に渡す
+      if (dailySales.length > 0) {
+        const labels = dailySales.map(d =>
         new Date(d.date).toLocaleDateString("ja-JP")
       );
-                      const data = dailySales.map((d) => d.total);
 
-                      const ctx = document.getElementById("salesChart").getContext("2d");
-                      new Chart(ctx, {
-                        type: "line",
-                        data: {
-                          labels,
-                          datasets: [
-                            {
-                              label: "日別売上",
-                              data,
-                              tension: 0,
-                            },
-                          ],
-                        },
-                        options: {
-                          responsive: true,
-            maintainAspectRatio: false, // ★これが無いのが原因
+      const data = dailySales.map((d) => d.total);
+
+      const ctx = document.getElementById("salesChart").getContext("2d");
+          new Chart(ctx, {
+              type: "line",
+              data: {
+                labels,
+                datasets: [
+                  {
+                    label: "日別売上",
+                    data,
+                    tension: 0,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false, // ★これが無いのが原因
                 scales: {
                   x: {
                     title: {
@@ -193,11 +194,18 @@
                   },
                 },
               },
-                      });
-                    }
-                    // ハンバーガーメニュー切り替えボタン
+            });
+          }
+      // ハンバーガーメニュー切り替えボタン
       hamburger.addEventListener("click", () => {
         nav.classList.toggle("active");
+      });
+
+      // メニュー内どこをクリックしても閉じる
+      wrapper.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() !== "a") {
+          nav.classList.remove("active");
+        }
       });
     </script>
   </body>
