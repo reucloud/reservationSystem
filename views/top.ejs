@@ -13,7 +13,7 @@
   <body>
     <!-- パスワードをお忘れの方への写真 -->
     <%- include("header") %>
-    <div class="userAllWrapper">
+    <div class="userAllWrapper" id="userAllWrapper">
       <div class="time">
         <h2>予約画面</h2>
         <div class="time-right">
@@ -121,13 +121,21 @@
       </div>
     </div>
     <script>
-      // ハンバーガーメニュー切り替え定数
       const hamburger = document.getElementById("hamburger");
       const nav = document.getElementById("nav");
+      const wrapper = document.getElementById("userAllWrapper");
 
-      // ハンバーガーメニュー切り替えボタン
-      hamburger.addEventListener("click", () => {
+      // ハンバーガークリックで開閉
+      hamburger.addEventListener("click", (e) => {
+        e.stopPropagation(); // 伝播防止
         nav.classList.toggle("active");
+      });
+
+      // メニュー内どこをクリックしても閉じる
+      wrapper.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() !== "a") {
+          nav.classList.remove("active");
+        }
       });
     </script>
   </body>
