@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>予約管理システム</title>
+    <!-- レスポンシブ対応用 -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <link rel="stylesheet" href="/public/style.css" />
+  </head>
+  <body>
+    <!-- パスワードをお忘れの方への写真 -->
+    <%- include("header") %>
+    <div class="userAllWrapper" id="userAllWrapper">
+      <div class="time">
+        <h2>受信トレイ</h2>
+        <div class="time-right">
+          <h4>
+            <%= (() => { const d = new Date(users.updated_at); const yyyy =
+            d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2,
+            '0'); const dd = String(d.getDate()).padStart(2, '0'); const hh =
+            String(d.getHours()).padStart(2, '0'); const mi =
+            String(d.getMinutes()).padStart(2, '0'); const ss =
+            String(d.getSeconds()).padStart(2, '0'); return `${yyyy}/${mm}/${dd}
+            ${hh}:${mi}:${ss}`; })() %> 時点
+          </h4>
+        </div>
+      </div>
+      <div class="wrapper">
+        <div class="userNewsList">
+          <div class="newsTop">
+            <h3>お知らせ</h3>
+          </div>
+          <div class="newsContents">
+            <ul>
+              <% const today = new Date(); %> <% if (news !== undefined) { %> <%
+              news.forEach(item => { %> <% const deadline = new
+              Date(item.finish_date); const dateCheck = today <= deadline; %> <%
+              if(dateCheck){ %>
+              <li>
+                <strong><%= item.name %></strong><br />
+                <small><%= item.contents %></small>
+              </li>
+              <% }})} %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const hamburger = document.getElementById("hamburger");
+      const nav = document.getElementById("nav");
+      const wrapper = document.getElementById("userAllWrapper");
+
+      // ハンバーガークリックで開閉
+      hamburger.addEventListener("click", (e) => {
+        e.stopPropagation(); // 伝播防止
+        nav.classList.toggle("active");
+      });
+
+      // メニュー内どこをクリックしても閉じる
+      wrapper.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() !== "a") {
+          nav.classList.remove("active");
+        }
+      });
+    </script>
+  </body>
+</html>

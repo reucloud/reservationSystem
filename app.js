@@ -47,6 +47,76 @@ app.get("/newUser", (req, res) => {
   res.render("newUser.ejs");
 });
 
+app.get("/letterBox", async (req, res) => {
+  try {
+    const id = req.session.userId;
+    if (!id) return res.redirect("/");
+
+    await connection
+      .promise()
+      .query("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
+        id,
+      ]);
+
+    const [userResult] = await connection
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [id]);
+    const user = userResult[0];
+
+    const [newsResult] = await connection.promise().query("SELECT * FROM news");
+    const news = newsResult;
+
+    res.render("letterBox", {
+      users: user,
+      news: news,
+      id: id,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Server Error");
+  }
+});
+
+app.get("/reservationPage", async (req, res) => {
+  try {
+    const id = req.session.userId;
+    if (!id) return res.redirect("/");
+
+    const month = req.query.month || new Date().toISOString().slice(0, 7);
+    const startDate = `${month}-01`;
+    const endDate = `${month}-31`;
+
+    await connection
+      .promise()
+      .query("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
+        id,
+      ]);
+
+    const [userResult] = await connection
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [id]);
+    const user = userResult[0];
+
+    const [reservationsResult] = await connection
+      .promise()
+      .query(
+        "SELECT * FROM reservations WHERE user_id = ? AND reserve_day BETWEEN ? AND ? ORDER BY reserve_day ASC, start_time ASC",
+        [id, startDate, endDate]
+      );
+    const reservations = reservationsResult;
+
+    res.render("reservationPage", {
+      users: user,
+      reservation: reservations,
+      selectedMonth: month,
+      id: id,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Server Error");
+  }
+});
+
 app.get("/forgetPassword", (req, res) => {
   res.render("forgetPassword.ejs");
 });
