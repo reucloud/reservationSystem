@@ -32,7 +32,13 @@
         <div class="reserve">
           <form action="/reservation" method="post">
             <label for="">予約日</label>
-            <input type="date" name="reserve_day" required />
+            <input
+              type="date"
+              name="reserve_day"
+              min="2000-01-01"
+              max="2099-12-31"
+              required
+            />
 
             <label for="">開始時間</label>
             <input type="time" name="start_time" required />

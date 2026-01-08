@@ -28,6 +28,8 @@
       <input
         name="reserve_day"
         type="date"
+        min="2000-01-01"
+        max="2099-12-31"
         value="<%= reserve.reserve_day_str %>"
         required
       />
@@ -42,6 +44,7 @@
       <input
         type="number"
         name="usage_time"
+        min="0"
         value="<%= reserve.usage_time %>"
         required
       />

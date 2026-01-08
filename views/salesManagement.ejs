@@ -39,7 +39,13 @@
         <fieldset class="monthPrint">
           <h3><%= Number(selectedMonth.split('-')[1]) %>月売上詳細</h3>
           <form method="GET" action="/salesManagement">
-            <input type="month" name="month" value="<%= selectedMonth %>" />
+            <input
+              type="month"
+              name="month"
+              min="2000-01-01"
+              max="2099-12-31"
+              value="<%= selectedMonth %>"
+            />
             <button type="submit">表示</button>
           </form>
         </fieldset>

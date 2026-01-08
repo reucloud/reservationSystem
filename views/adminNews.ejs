@@ -75,9 +75,21 @@
             <label for="">タイトル</label>
             <input type="text" name="title" required />
             <label for="">公開開始日</label>
-            <input type="date" name="start_date" required />
+            <input
+              type="date"
+              name="start_date"
+              min="2000-01-01"
+              max="2099-12-31"
+              required
+            />
             <label for="">公開終了日</label>
-            <input type="date" name="finish_date" required />
+            <input
+              type="date"
+              name="finish_date"
+              min="2000-01-01"
+              max="2099-12-31"
+              required
+            />
             <label for="">本文</label>
             <textarea name="contents" id="" required></textarea>
             <input type="submit" value="登録する" />
