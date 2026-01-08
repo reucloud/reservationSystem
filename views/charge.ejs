@@ -61,6 +61,7 @@
           <h3>チャージ確認</h3>
           <p>チャージ金額<span id="confirmAmount"></span> 円</p>
           <form action="/charge" method="post" onsubmit="return false;">
+            <input type="hidden" name="targetUserId" value="<%= users.id %>" />
             <input type="hidden" name="charge" id="confirmChargeInput" />
             <input
               type="password"
