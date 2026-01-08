@@ -12,7 +12,7 @@
   </head>
   <body>
     <%- include("header") %>
-    <div class="userAllWrapper">
+    <div class="userAllWrapper" id="userAllWrapper">
       <div class="time">
         <h2>お知らせ修正画面</h2>
         <div class="time-right">
@@ -78,6 +78,7 @@
             <input
               type="date"
               name="start_date"
+              id="start_date"
               min="2000-01-01"
               max="2099-12-31"
               required
@@ -86,6 +87,7 @@
             <input
               type="date"
               name="finish_date"
+              id="finish_date"
               min="2000-01-01"
               max="2099-12-31"
               required
@@ -103,6 +105,9 @@
       const nav = document.getElementById("nav");
       const wrapper = document.getElementById("userAllWrapper");
 
+      const start = document.getElementById("start_date");
+      const end = document.getElementById("finish_date");
+
       // ハンバーガーメニュー切り替えボタン
       hamburger.addEventListener("click", () => {
         nav.classList.toggle("active");
@@ -112,6 +117,24 @@
       wrapper.addEventListener("click", (e) => {
         if (e.target.tagName.toLowerCase() !== "a") {
           nav.classList.remove("active");
+        }
+      });
+
+      // 開始日が終了日を超えないようにする
+      // 開始時刻変更時
+      start.addEventListener("change", () => {
+        end.min = start.value;
+
+        if (end.value && end.value < start.value) {
+          end.value = "";
+        }
+      });
+
+      // 終了時刻変更時
+      end.addEventListener("change", () => {
+        if (end.value < start.value) {
+          alert("終了日は開始日以降を選択してください");
+          end.value = "";
         }
       });
     </script>

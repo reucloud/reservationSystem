@@ -49,6 +49,7 @@
       <input
         type="date"
         name="start_date"
+        id="start_date"
         min="2000-01-01"
         max="2099-12-31"
         value="<%= coupon.start_date_str %>"
@@ -58,6 +59,7 @@
       <input
         type="date"
         name="finish_date"
+        id="finish_date"
         min="2000-01-01"
         max="2099-12-31"
         value="<%= coupon.finish_date_str %>"
@@ -79,23 +81,41 @@
       <p id="serviceError" style="color: red; display: none">
         対象サービスを1つ以上選択してください
       </p>
-      <script>
-        document
-          .querySelector(".couponSet")
-          .addEventListener("submit", function (e) {
-            const services = document.querySelectorAll(
-              'input[name="service[]"]:checked'
-            );
-
-            if (services.length === 0) {
-              e.preventDefault();
-              document.getElementById("serviceError").style.display = "block";
-            }
-          });
-      </script>
       <label for="">注意事項</label>
       <textarea name="memo"><%= coupon.memo %></textarea>
       <input type="submit" value="登録する" />
     </form>
+    <script>
+      document
+        .querySelector(".couponSet")
+        .addEventListener("submit", function (e) {
+          const services = document.querySelectorAll(
+            'input[name="service[]"]:checked'
+          );
+
+          if (services.length === 0) {
+            e.preventDefault();
+            document.getElementById("serviceError").style.display = "block";
+          }
+        });
+
+      // 開始日が終了日を超えないようにする
+      // 開始時刻変更時
+      start.addEventListener("change", () => {
+        end.min = start.value;
+
+        if (end.value && end.value < start.value) {
+          end.value = "";
+        }
+      });
+
+      // 終了時刻変更時
+      end.addEventListener("change", () => {
+        if (end.value < start.value) {
+          alert("終了日は開始日以降を選択してください");
+          end.value = "";
+        }
+      });
+    </script>
   </body>
 </html>
