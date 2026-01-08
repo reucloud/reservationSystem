@@ -105,6 +105,10 @@ header a {
   list-style: none;
 }
 
+.mobileOnly {
+  display: none;
+}
+
 .nav a {
   color: white;
   text-decoration: none;
@@ -724,6 +728,11 @@ fieldset {
   }
   .pageChange a {
     font-size: 14px;
+  }
+
+  /* ヘッダー部分 */
+  .mobileOnly {
+    display: block; /*スマホでは表示*/
   }
 
   /* ユーザートップ画面 */
