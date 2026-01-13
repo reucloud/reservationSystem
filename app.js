@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename); // 追加
 
 const connection = mysql.createConnection({
   host: "localhost",
-  user: "reucloud",
+  user: "root",
   password: "reucloud1412",
   database: "reservation_system",
 });
