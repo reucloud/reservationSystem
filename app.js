@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename); // 追加
 
 const connection = mysql.createConnection({
   host: "localhost",
-  user: "root",
+  user: "reucloud",
   password: "reucloud1412",
   database: "reservation_system",
 });
@@ -84,7 +84,10 @@ app.get("/reservationPage", async (req, res) => {
 
     const month = req.query.month || new Date().toISOString().slice(0, 7);
     const startDate = `${month}-01`;
-    const endDate = `${month}-31`;
+
+    const endDateObj = new Date(month + "-01");
+    endDateObj.setMonth(endDateObj.getMonth() + 1);
+    const endDate = endDateObj.toISOString().slice(0, 10);
 
     await connection
       .promise()
@@ -97,12 +100,14 @@ app.get("/reservationPage", async (req, res) => {
       .query("SELECT * FROM users WHERE id = ?", [id]);
     const user = userResult[0];
 
-    const [reservationsResult] = await connection
-      .promise()
-      .query(
-        "SELECT * FROM reservations WHERE user_id = ? AND reserve_day BETWEEN ? AND ? ORDER BY reserve_day ASC, start_time ASC",
-        [id, startDate, endDate]
-      );
+    const [reservationsResult] = await connection.promise().query(
+      `SELECT * FROM reservations
+         WHERE user_id = ?
+           AND reserve_day >= ?
+           AND reserve_day < ?
+         ORDER BY reserve_day ASC, start_time ASC`,
+      [id, startDate, endDate]
+    );
     const reservations = reservationsResult;
 
     res.render("reservationPage", {
@@ -159,7 +164,9 @@ app.get("/salesManagement", (req, res) => {
   const selectedMonth = month || new Date().toISOString().slice(0, 7); // 今月
 
   const startDate = `${selectedMonth}-01`;
-  const endDate = `${selectedMonth}-31`; // 月末ざっくりでOK（MySQLが調整）
+  const endDateObj = new Date(selectedMonth + "-01");
+  endDateObj.setMonth(endDateObj.getMonth() + 1);
+  const endDate = endDateObj.toISOString().slice(0, 10);
 
   if (!id) return res.redirect("/");
 
@@ -184,7 +191,7 @@ app.get("/salesManagement", (req, res) => {
               SUM(amount) AS total_sales
             FROM reservations
             WHERE status != 'キャンセル'
-              AND reserve_day BETWEEN ? AND ?
+              AND reserve_day >= ? AND reserve_day < ?
           `;
 
           // サービス別ランキング
@@ -195,7 +202,7 @@ app.get("/salesManagement", (req, res) => {
             FROM reservations
             JOIN resources ON reservations.resource_id = resources.id
             WHERE reservations.status != 'キャンセル'
-              AND reservations.reserve_day BETWEEN ? AND ?
+              AND reservations.reserve_day >= ? AND reservations.reserve_day < ?
             GROUP BY resources.id
             ORDER BY total_amount DESC
           `;
@@ -207,7 +214,7 @@ app.get("/salesManagement", (req, res) => {
               SUM(amount) AS total
             FROM reservations
             WHERE status != 'キャンセル'
-              AND reserve_day BETWEEN ? AND ?
+              AND reserve_day >= ? AND reserve_day < ?
             GROUP BY DATE(reserve_day)
             ORDER BY DATE(reserve_day)
           `;
@@ -221,7 +228,7 @@ app.get("/salesManagement", (req, res) => {
           FROM reservations
           JOIN users ON reservations.user_id = users.id
           WHERE reservations.status != 'キャンセル'
-            AND reservations.reserve_day BETWEEN ? AND ?
+            AND reservations.reserve_day >= ? AND reservations.reserve_day < ?
           GROUP BY users.id, users.name
           ORDER BY total_amount DESC
           `;
@@ -579,7 +586,10 @@ app.get("/top", (req, res) => {
 
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   const startDate = `${month}-01`;
-  const endDate = `${month}-31`;
+  const endDate = new Date(month + "-01");
+  endDate.setMonth(endDate.getMonth() + 1);
+
+  const endDateStr = endDate.toISOString().slice(0, 10);
 
   connection.query(
     "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
@@ -605,10 +615,11 @@ app.get("/top", (req, res) => {
                 SELECT *
                 FROM reservations
                 WHERE user_id = ?
-                  AND reserve_day BETWEEN ? AND ?
+                  AND reserve_day >= ?
+                  AND reserve_day < ?
                 ORDER BY reserve_day ASC, start_time ASC
                 `,
-                [id, startDate, endDate],
+                [id, startDate, endDateStr],
                 (error, reservations) => {
                   if (error) throw error;
 
@@ -841,6 +852,18 @@ app.get("/adminTop", (req, res) => {
   const id = req.session.userId;
   const range = req.query.range;
   const excludeProvided = req.query.excludeProvided === "1";
+
+  // 月の取得
+  const month = req.query.month || new Date().toISOString().slice(0, 7);
+
+  // 日数始めの取得
+  const startDate = `${month}-01`;
+
+  // 日数終りの修正•取得
+  const endDateObj = new Date(month + "-01");
+  endDateObj.setMonth(endDateObj.getMonth() + 1);
+  const endDate = endDateObj.toISOString().slice(0, 10);
+
   let reservationSql = "";
   if (!id) return res.redirect("/"); // ログインしていなければ戻す
 
@@ -854,22 +877,26 @@ app.get("/adminTop", (req, res) => {
     FROM reservations
     JOIN users ON reservations.user_id = users.id
     JOIN resources ON reservations.resource_id = resources.id
-    WHERE DATE(reservations.reserve_day) = CURDATE()
+    WHERE DATE(reservations.reserve_day) = CURDATE() 
+      AND reserve_day >= ?
+      AND reserve_day < ?
     ${excludeProvided ? "AND reservations.status != '提供済'" : ""}
     ORDER BY reservations.start_time ASC
 `;
   } else {
     reservationSql = `
-    SELECT
-      reservations.*,
-      DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
-      users.name AS user_name,
-      resources.name AS resource_name
-    FROM reservations
-    JOIN users ON reservations.user_id = users.id
-    JOIN resources ON reservations.resource_id = resources.id
-    ${excludeProvided ? "WHERE reservations.status != '提供済'" : ""}
-    ORDER BY reservations.reserve_day ASC, reservations.start_time ASC
+  SELECT
+    reservations.*,
+    DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
+    users.name AS user_name,
+    resources.name AS resource_name
+  FROM reservations
+  JOIN users ON reservations.user_id = users.id
+  JOIN resources ON reservations.resource_id = resources.id
+  WHERE reservations.reserve_day >= ?
+    AND reservations.reserve_day < ?
+    ${excludeProvided ? "AND reservations.status != '提供済'" : ""}
+  ORDER BY reservations.reserve_day ASC, reservations.start_time ASC
     `;
   }
 
@@ -892,19 +919,24 @@ app.get("/adminTop", (req, res) => {
             (error, results) => {
               if (error) throw error;
               const news = results;
-              connection.query(reservationSql, (error, reservations) => {
-                if (error) throw error;
-                const reserve = reservations;
-                res.render("adminTop", {
-                  users: user,
-                  news: news || [],
-                  reservation: reserve || [],
-                  id: id,
-                  couponError: false,
-                  excludeProvided,
-                  range: req.query.range || "",
-                });
-              });
+              connection.query(
+                reservationSql,
+                [startDate, endDate],
+                (error, reservations) => {
+                  if (error) throw error;
+                  const reserve = reservations;
+                  res.render("adminTop", {
+                    users: user,
+                    news: news || [],
+                    reservation: reserve || [],
+                    id: id,
+                    couponError: false,
+                    excludeProvided,
+                    selectedMonth: month,
+                    range: req.query.range || "",
+                  });
+                }
+              );
             }
           );
         }

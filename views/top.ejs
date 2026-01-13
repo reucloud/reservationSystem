@@ -31,7 +31,7 @@
       <div class="wrapper">
         <div class="reserve">
           <form action="/reservation" method="post">
-            <label for="">予約日</label>
+            <label for="">予約日*</label>
             <input
               type="date"
               name="reserve_day"
@@ -40,19 +40,19 @@
               required
             />
 
-            <label for="">開始時間</label>
+            <label for="">開始時間*</label>
             <input type="time" name="start_time" required />
 
-            <label for="">利用時間</label>
+            <label for="">利用時間*</label>
             <input type="number" name="usage_time" min="1" required />
 
-            <label for="">内容選択</label>
+            <label for="">内容選択*</label>
             <select name="resource" required>
               <option value="massage">マッサージ</option>
               <option value="cook">調理</option>
             </select>
 
-            <label for="">クーポンコード</label>
+            <label for="">クーポンコード(クーポンページから入力)</label>
             <input type="text" name="coupon" />
             <% if (couponError) { %>
             <p class="error">このクーポンは利用できません</p>
@@ -91,7 +91,7 @@
             <div class="reservationTop">
               <h3>予約一覧</h3>
 
-              <form method="get" action="/top" class="monthSelect">
+              <form class="monthSelect" action="/top" method="get">
                 <input type="month" name="month" value="<%= selectedMonth %>" />
                 <button type="submit">表示</button>
               </form>
@@ -114,7 +114,7 @@
                   %>
                   <tr>
                     <td><%= format(reserveday) %></td>
-                    <td><%= reserve.start_time %></td>
+                    <td><%= reserve.start_time.slice(0,5) %></td>
                     <td><%= reserve.usage_time %>分</td>
                     <td><%= reserve.status %></td>
                   </tr>
@@ -131,6 +131,14 @@
       const nav = document.getElementById("nav");
       const wrapper = document.getElementById("userAllWrapper");
 
+      // 予約日と開始時間を取得
+      const reserveDay = document.querySelector('input[name="reserve_day"]');
+      const startTime = document.querySelector('input[name="start_time"]');
+
+      // 今日を取得
+      const today = new Date().toISOString().split("T")[0];
+      reserveDay.min = today;
+
       // ハンバーガークリックで開閉
       hamburger.addEventListener("click", (e) => {
         e.stopPropagation(); // 伝播防止
@@ -143,6 +151,32 @@
           nav.classList.remove("active");
         }
       });
+
+      // 今日の場合だけ「現在時刻以降」に制限
+      function updateMinTime() {
+        if (reserveDay.value !== today) {
+          startTime.min = "";
+          return;
+        }
+
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm = String(now.getMinutes()).padStart(2, "0");
+        const currentTime = `${hh}:${mm}`;
+
+        startTime.min = currentTime;
+
+        // すでに入っている時刻が過去なら強制リセット
+        if (startTime.value && startTime.value < currentTime) {
+          startTime.value = "";
+        }
+      }
+
+      // 日付変更時
+      reserveDay.addEventListener("change", updateMinTime);
+
+      // 時刻入力時
+      startTime.addEventListener("change", updateMinTime);
     </script>
   </body>
 </html>

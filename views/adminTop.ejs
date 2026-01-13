@@ -50,6 +50,16 @@
             <div class="reserveCheck">
               <div class="reserveCheckTop">
                 <h3>予約確認</h3>
+                <% if(range !== "today"){ %>
+                <form class="monthSelect" action="/adminTop" method="get">
+                  <input
+                    type="month"
+                    name="month"
+                    value="<%= selectedMonth %>"
+                  />
+                  <button type="submit">表示</button>
+                </form>
+                <% } %>
                 <form method="get" action="/adminTop">
                   <label>
                     <input type="checkbox" name="excludeProvided" <%= range ===
@@ -77,7 +87,7 @@
                     <tr>
                       <td><%= reserve.user_name %></td>
                       <td><%= reserve.reserve_day_str %></td>
-                      <td><%= reserve.start_time %></td>
+                      <td><%= reserve.start_time.slice(0,5) %></td>
                       <td><%= reserve.resource_name %></td>
                       <td><%= reserve.status %></td>
                       <td>
