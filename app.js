@@ -289,7 +289,7 @@ app.post("/couponInput", (req, res) => {
   const couponCode = req.body.code;
   const discountWay = req.body.type;
   const discount = req.body.discount;
-  const filter = req.body.filter === "" ? null : req.body.filter;
+  const filter = req.body.filter === "" ? 0 : req.body.filter;
   const start_date = req.body.start_date;
   const finish_date = req.body.finish_date;
   const couponPhoto = req.body.photo;
@@ -389,7 +389,7 @@ app.post("/adminCoupons/edit/:id", (req, res) => {
       code,
       type,
       discount,
-      filter || null,
+      filter || 0,
       start_date,
       finish_date,
       photo,
@@ -552,35 +552,53 @@ app.post("/charge", (req, res) => {
   );
 });
 
-app.get("/coupons", (req, res) => {
+app.get("/coupons", async (req, res) => {
   const id = req.session.userId;
-  connection.query(
-    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-    [id],
-    (error) => {
-      if (error) throw error;
-      connection.query(
-        "SELECT * FROM users WHERE id = ?",
-        [id],
-        (error, userresults) => {
-          if (error) throw error;
-          const user = userresults[0];
-          connection.query(
-            "SELECT * FROM coupons ORDER BY code",
-            (error, results) => {
-              if (error) throw error;
-              const coupons = results;
-              res.render("coupons", {
-                users: user,
-                coupons: coupons || [],
-                id: id,
-              });
-            }
-          );
-        }
-      );
-    }
+  if (!id) return res.redirect("/");
+
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const startStr = start.toISOString().slice(0, 10);
+  const endStr = end.toISOString().slice(0, 10);
+
+  // 今月の利用額
+  const [sumRows] = await connection.promise().query(
+    `
+    SELECT COALESCE(SUM(amount),0) AS total
+    FROM reservations
+    WHERE user_id = ?
+      AND status != 'キャンセル'
+      AND reserve_day >= ?
+      AND reserve_day < ?
+    `,
+    [id, startStr, endStr]
   );
+
+  const monthlyTotal = sumRows[0].total;
+
+  // filter 条件を満たすクーポンだけ表示
+  const [coupons] = await connection.promise().query(
+    `
+    SELECT *
+    FROM coupons
+    WHERE is_open = 1
+      AND filter <= ?
+    ORDER BY code
+    `,
+    [monthlyTotal]
+  );
+
+  const [user] = await connection
+    .promise()
+    .query("SELECT * FROM users WHERE id = ?", [id]);
+
+  res.render("coupons", {
+    users: user[0],
+    coupons,
+    id,
+  });
 });
 
 app.get("/top", (req, res) => {
