@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url); // 追加
 const __dirname = path.dirname(__filename); // 追加
 
 const connection = mysql.createConnection({
-  host: "localhost",
+  host: "127.0.0.1",
   user: "root",
   password: "reucloud1412",
   database: "reservation_system",
@@ -207,16 +207,19 @@ app.get("/salesManagement", (req, res) => {
             ORDER BY total_amount DESC
           `;
 
-          // 日別売上（折れ線グラフ用）
+          // 日別売上（折れ線グラフ用・ユーザー名も含む）
           const dailySalesSql = `
             SELECT
-              DATE(reserve_day) AS date,
-              SUM(amount) AS total
+              DATE(reservations.reserve_day) AS date,
+              SUM(reservations.amount) AS total,
+              GROUP_CONCAT(DISTINCT users.name SEPARATOR ', ') AS user_names
             FROM reservations
-            WHERE status != 'キャンセル'
-              AND reserve_day >= ? AND reserve_day < ?
-            GROUP BY DATE(reserve_day)
-            ORDER BY DATE(reserve_day)
+            JOIN users ON reservations.user_id = users.id
+            WHERE reservations.status != 'キャンセル'
+              AND reservations.reserve_day >= ? 
+              AND reservations.reserve_day < ?
+            GROUP BY DATE(reservations.reserve_day)
+            ORDER BY DATE(reservations.reserve_day)
           `;
 
           //ユーザー別ランキング
@@ -628,7 +631,7 @@ app.get("/top", (req, res) => {
                     news: news || [],
                     reservation: reservations || [],
                     id: id,
-                    couponError: false,
+                    couponError: 0,
                     selectedMonth: month,
                   });
                 }
@@ -771,7 +774,7 @@ app.post("/reservation", async (req, res) => {
                       news: newsResults || [],
                       reservation: reservations || [],
                       id,
-                      couponError: true,
+                      couponError: amount,
                       selectedMonth: month,
                     });
                   }
@@ -807,46 +810,105 @@ app.post("/reservation", async (req, res) => {
   );
 });
 
+// クーポンコードを反映し価格を返す関数
 async function AmountCheck(resource, usage_time, couponCode) {
+  // リソースのid、名前、価格をDBから取得
   const [resourceRows] = await connection
     .promise()
     .query("SELECT id, name, price FROM resources WHERE id = ?", [resource]);
 
+  // リソースチェック(無ければ0を返す)
   if (resourceRows.length === 0) return 0;
 
   const { name, price } = resourceRows[0];
   let amount = price * (Number(usage_time) / 10);
 
+  // クーポンコードが未入力なら定価を返す
   if (!couponCode) return Math.floor(amount);
 
+  // コードが有効かどうか確認
   const [couponRows] = await connection
     .promise()
     .query("SELECT * FROM coupons WHERE code = ? AND is_open = 1", [
       couponCode,
     ]);
 
-  if (couponRows.length === 0) return -1;
-
+  // 有効で無ければエラーを返す
   const coupon = couponRows[0];
+  if (coupon.length === 0) return -1;
 
+  // 今日の日付を取得し不正な日付じゃないか確認
   const today = new Date();
   if (
+    // 今日が開始日よりも前の場合
     today < new Date(coupon.start_date) ||
+    // 今日が終了日よりも後の場合
     today > new Date(coupon.finish_date)
   ) {
-    return -1;
+    return -2;
   }
 
+  // サービスが使用かどうか確認
   const services = coupon.service.split(",");
-  if (!services.includes(name)) return -1;
+  if (!services.includes(name)) return -3;
 
+  // 割引処理
   if (coupon.type === "yen") amount -= coupon.discount;
   if (coupon.type === "percent") amount *= 1 - coupon.discount / 100;
 
+  // 負の値にならないようにする
   if (amount < 0) amount = 0;
 
+  // 値を返す
   return Math.floor(amount);
 }
+
+// 予約ステータス更新&チャージ調整API
+app.post("/reservation/status/update", (req, res) => {
+  const { reservationId, newStatus } = req.body;
+
+  // ① 変更前の予約情報を取得
+  connection.query(
+    "SELECT status, price, user_id FROM reservations WHERE id = ?",
+    [reservationId],
+    (err, rows) => {
+      if (err) throw err;
+      if (rows.length === 0) return res.sendStatus(404);
+
+      const oldStatus = rows[0].status;
+      const price = rows[0].price;
+      const userId = rows[0].user_id;
+
+      // ② ステータスを更新
+      connection.query(
+        "UPDATE reservations SET status = ? WHERE id = ?",
+        [newStatus, reservationId],
+        (err) => {
+          if (err) throw err;
+
+          // ③ ステータス差分によるチャージ調整
+          if (oldStatus !== "提供済み" && newStatus === "提供済み") {
+            // 提供済みになった瞬間だけ減額
+            connection.query(
+              "UPDATE users SET charge = charge - ? WHERE id = ?",
+              [price, userId]
+            );
+          }
+
+          if (oldStatus === "提供済み" && newStatus !== "提供済み") {
+            // 提供済みから外れたら返金
+            connection.query(
+              "UPDATE users SET charge = charge + ? WHERE id = ?",
+              [price, userId]
+            );
+          }
+
+          res.redirect("back");
+        }
+      );
+    }
+  );
+});
 
 app.get("/adminTop", (req, res) => {
   const id = req.session.userId;

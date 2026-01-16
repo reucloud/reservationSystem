@@ -153,66 +153,87 @@
     </div>
 
     <script>
+      // 日別売上データ（EJS → JS）
       const dailySales = <%- JSON.stringify(dailySales || []) %>;
       console.log("dailySales:", dailySales);
 
-      // ハンバーガーメニュー切り替え定数
+      // グラフ描画
+      if (dailySales.length > 0) {
+        const labels = dailySales.map(d =>
+          new Date(d.date).toLocaleDateString("ja-JP")
+        );
+
+        const data = dailySales.map(d => d.total);
+        const users = dailySales.map(d => d.user_names);
+
+        const canvas = document.getElementById("salesChart");
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+
+          new Chart(ctx, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "利用者",
+                  data,
+                  tension: 0
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      const index = context.dataIndex;
+                      const value = context.raw;
+                      const user = users[index] || "不明";
+                      return `${user} / ￥${value.toLocaleString()}`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "日付"
+                  }
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: "売上金額"
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+
+      // ハンバーガーメニュー（存在する場合のみ）
       const hamburger = document.getElementById("hamburger");
       const nav = document.getElementById("nav");
       const wrapper = document.getElementById("userAllWrapper");
 
-      // ↑ EJSで配列をJSに安全に渡す
-      if (dailySales.length > 0) {
-        const labels = dailySales.map(d =>
-        new Date(d.date).toLocaleDateString("ja-JP")
-      );
+      if (hamburger && nav) {
+        hamburger.addEventListener("click", () => {
+          nav.classList.toggle("active");
+        });
+      }
 
-      const data = dailySales.map((d) => d.total);
-
-      const ctx = document.getElementById("salesChart").getContext("2d");
-          new Chart(ctx, {
-              type: "line",
-              data: {
-                labels,
-                datasets: [
-                  {
-                    label: "日別売上",
-                    data,
-                    tension: 0,
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false, // ★これが無いのが原因
-                scales: {
-                  x: {
-                    title: {
-                      display: true,
-                      text: "日付",
-                    },
-                  },
-                  y: {
-                    title: {
-                      display: true,
-                      text: "売上金額",
-                    },
-                  },
-                },
-              },
-            });
+      if (wrapper && nav) {
+        wrapper.addEventListener("click", (e) => {
+          if (e.target.tagName.toLowerCase() !== "a") {
+            nav.classList.remove("active");
           }
-      // ハンバーガーメニュー切り替えボタン
-      hamburger.addEventListener("click", () => {
-        nav.classList.toggle("active");
-      });
-
-      // メニュー内どこをクリックしても閉じる
-      wrapper.addEventListener("click", (e) => {
-        if (e.target.tagName.toLowerCase() !== "a") {
-          nav.classList.remove("active");
-        }
-      });
+        });
+      }
     </script>
   </body>
 </html>

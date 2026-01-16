@@ -54,9 +54,6 @@
 
             <label for="">クーポンコード(クーポンページから入力)</label>
             <input type="text" name="coupon" />
-            <% if (couponError) { %>
-            <p class="error">このクーポンは利用できません</p>
-            <% } %>
 
             <label for="">備考</label>
             <input type="textarea" name="memo" />
@@ -66,6 +63,15 @@
               value="予約する"
               onsubmit="return confirm('予約します。よろしいですか？');"
             />
+            <% if(couponError === -1){ %>
+            <p>クーポンコードが無効です</p>
+            <% }else if(couponError === -2){ %>
+            <p>開始日または終了日が無効です</p>
+            <% }else if(couponError === -3){ %>
+            <p>サービスが使用不可です</p>
+            <% } %> <% if (couponError) { %>
+            <p class="error">このクーポンは利用できません</p>
+            <% } %>
           </form>
         </div>
         <div class="information">
