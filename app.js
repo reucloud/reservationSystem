@@ -15,6 +15,7 @@ const connection = mysql.createConnection({
   user: "root",
   password: "reucloud1412",
   database: "reservation_system",
+  charset: "utf8mb4",
 });
 
 connection.connect((err) => {
