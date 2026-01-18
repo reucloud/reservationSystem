@@ -935,7 +935,9 @@ app.get("/adminTop", (req, res) => {
   const excludeProvided = req.query.excludeProvided === "1";
 
   // 月の取得
-  const month = req.query.month || new Date().toISOString().slice(0, 7);
+  const month = req.query.month
+    ? req.query.month
+    : new Date().toISOString().slice(0, 7);
 
   // 日数始めの取得
   const startDate = `${month}-01`;
