@@ -34,14 +34,16 @@ app.use(
     secret: "secret-key",
     resave: false,
     saveUninitialized: true,
-  })
+  }),
 );
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 app.get("/", (req, res) => {
-  res.render("login");
+  res.render("login", {
+    error: "",
+  });
 });
 
 app.get("/newUser", (req, res) => {
@@ -107,7 +109,7 @@ app.get("/reservationPage", async (req, res) => {
            AND reserve_day >= ?
            AND reserve_day < ?
          ORDER BY reserve_day ASC, start_time ASC`,
-      [id, startDate, endDate]
+      [id, startDate, endDate],
     );
     const reservations = reservationsResult;
 
@@ -150,11 +152,11 @@ app.get("/adminCoupons", (req, res) => {
                 coupons: coupons || [],
                 id: id,
               });
-            }
+            },
           );
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -271,17 +273,17 @@ app.get("/salesManagement", (req, res) => {
                             selectedMonth,
                             id: id,
                           });
-                        }
+                        },
                       );
-                    }
+                    },
                   );
-                }
+                },
               );
-            }
+            },
           );
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -318,7 +320,7 @@ app.post("/couponInput", (req, res) => {
     (error, result) => {
       if (error) throw error;
       res.redirect("/adminCoupons");
-    }
+    },
   );
 });
 
@@ -339,7 +341,7 @@ app.get("/adminCoupons/edit/:id", (req, res) => {
       res.render("adminCouponEdit", {
         coupon: results[0],
       });
-    }
+    },
   );
 });
 
@@ -404,7 +406,7 @@ app.post("/adminCoupons/edit/:id", (req, res) => {
 
       // 更新後は一覧へ戻す
       res.redirect("/adminCoupons");
-    }
+    },
   );
 });
 
@@ -426,7 +428,7 @@ app.post("/newsInput", (req, res) => {
     (error, result) => {
       if (error) throw error;
       res.redirect("/adminNews");
-    }
+    },
   );
 });
 
@@ -453,11 +455,11 @@ app.get("/adminNews", (req, res) => {
                 news: news || [],
                 id: id,
               });
-            }
+            },
           );
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -478,7 +480,7 @@ app.get("/adminNews/edit/:id", (req, res) => {
       res.render("adminNewsEdit", {
         news: results[0],
       });
-    }
+    },
   );
 });
 
@@ -493,7 +495,7 @@ app.post("/adminNews/edit/:id", (req, res) => {
     (error, results) => {
       if (error) throw error;
       res.redirect("/adminNews");
-    }
+    },
   );
 });
 
@@ -529,9 +531,9 @@ app.get("/charge", (req, res) => {
               id: id,
             });
           }
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -549,7 +551,7 @@ app.post("/charge", (req, res) => {
     (error, results) => {
       if (error) throw error;
       res.redirect("/charge");
-    }
+    },
   );
 });
 
@@ -574,7 +576,7 @@ app.get("/coupons", async (req, res) => {
       AND reserve_day >= ?
       AND reserve_day < ?
     `,
-    [id, startStr, endStr]
+    [id, startStr, endStr],
   );
 
   const monthlyTotal = sumRows[0].total;
@@ -588,7 +590,7 @@ app.get("/coupons", async (req, res) => {
       AND filter <= ?
     ORDER BY code
     `,
-    [monthlyTotal]
+    [monthlyTotal],
   );
 
   const [user] = await connection
@@ -653,13 +655,13 @@ app.get("/top", (req, res) => {
                     couponError: 0,
                     selectedMonth: month,
                   });
-                }
+                },
               );
-            }
+            },
           );
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -684,8 +686,12 @@ app.post("/login", (req, res) => {
         } else {
           return res.redirect("/top");
         }
+      } else {
+        return res.render("login", {
+          error: "メールアドレスまたはパスワードが正しくありません",
+        });
       }
-    }
+    },
   );
 });
 
@@ -744,9 +750,9 @@ app.post("/newUser", (req, res) => {
 
           req.session.userId = results.insertId;
           res.redirect("/top");
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -796,9 +802,9 @@ app.post("/reservation", async (req, res) => {
                       couponError: amount,
                       selectedMonth: month,
                     });
-                  }
+                  },
                 );
-              }
+              },
             );
           } else {
             // ④ 正常予約
@@ -820,12 +826,12 @@ app.post("/reservation", async (req, res) => {
               (error) => {
                 if (error) throw error;
                 res.redirect("/top");
-              }
+              },
             );
           }
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -910,7 +916,7 @@ app.post("/reservation/status/update", (req, res) => {
             // 提供済みになった瞬間だけ減額
             connection.query(
               "UPDATE users SET charge = charge - ? WHERE id = ?",
-              [price, userId]
+              [price, userId],
             );
           }
 
@@ -918,14 +924,14 @@ app.post("/reservation/status/update", (req, res) => {
             // 提供済みから外れたら返金
             connection.query(
               "UPDATE users SET charge = charge + ? WHERE id = ?",
-              [price, userId]
+              [price, userId],
             );
           }
 
           res.redirect("back");
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -1018,13 +1024,13 @@ app.get("/adminTop", (req, res) => {
                     selectedMonth: month,
                     range: req.query.range || "",
                   });
-                }
+                },
               );
-            }
+            },
           );
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -1081,7 +1087,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
       .promise()
       .query(
         "SELECT user_id, amount, status, is_charged FROM reservations WHERE id = ?",
-        [editId]
+        [editId],
       );
 
     if (rows.length === 0) {
@@ -1156,7 +1162,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
         status,
         memo,
         editId,
-      ]
+      ],
     );
 
     res.redirect("/adminTop");

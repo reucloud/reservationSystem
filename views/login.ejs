@@ -11,9 +11,20 @@
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
+  <% if (error) { %>
+<div class="modal-overlay">
+  <div class="modal">
+    <div class="modal-content">
+      <p class="modal-error"><%= error %></p>
+      <a href="/" class="modal-btn">戻る</a>
+    </div>
+  </div>
+</div>
+<% } %>
     <div class="login">
       <h3>ログイン</h3>
     </div>
+
     <div class="infoInput">
       <form class="input" action="/login" method="post">
         <label>メールアドレス:</label>
