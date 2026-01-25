@@ -24,13 +24,14 @@
           <div class="time-right">
             <h4>
               <% if (users && users.updated_at) { %>
-                <%= new Date(users.updated_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) %> 時点
+                <span id="updatedAt" data-ts="<%= new Date(users.updated_at).getTime() %>"></span> 時点
               <% } else { %>
-                  --:--:-- 時点
+                --:--:-- 時点
               <% } %>
             </h4>
           </div>
         </div>
+
 
         <fieldset class="monthPrint">
           <h3><%= Number(selectedMonth.split('-')[1]) %>月売上詳細</h3>
@@ -230,6 +231,18 @@
           }
         });
       }
+
+      // updatedAt を JST 表示に変換
+      document.addEventListener("DOMContentLoaded", () => {
+        const updatedAtElements = document.querySelectorAll("[id='updatedAt']");
+        updatedAtElements.forEach(el => {
+          const timestamp = el.getAttribute("data-ts");
+          if (timestamp) {
+            const date = new Date(parseInt(timestamp));
+            el.textContent = date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+          }
+        });
+      });
     </script>
   </body>
 </html>
