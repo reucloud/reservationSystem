@@ -23,15 +23,11 @@
           <h2>売上管理</h2>
           <div class="time-right">
             <h4>
-              <% if (users && users.updated_at) { const d = new
-              Date(users.updated_at); const yyyy = d.getFullYear(); const mm =
-              String(d.getMonth() + 1).padStart(2, "0"); const dd =
-              String(d.getDate()).padStart(2, "0"); const hh =
-              String(d.getHours()).padStart(2, "0"); const mi =
-              String(d.getMinutes()).padStart(2, "0"); const ss =
-              String(d.getSeconds()).padStart(2, "0"); %> <%=
-              `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}` %> 時点 <% } else { %>
-              --:--:-- 時点 <% } %>
+              <% if (users && users.updated_at) { %>
+                <%= new Date(users.updated_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) %> 時点
+              <% } else { %>
+                  --:--:-- 時点
+              <% } %>
             </h4>
           </div>
         </div>
