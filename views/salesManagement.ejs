@@ -157,7 +157,7 @@
       // グラフ描画
       if (dailySales.length > 0) {
         const labels = dailySales.map(d =>
-          new Date(d.date).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })
+          new Date(new Date(d.date).getTime() + 9 * 60 * 60 * 1000).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })
         );
 
         const data = dailySales.map(d => d.total);
@@ -238,7 +238,7 @@
         updatedAtElements.forEach(el => {
           const timestamp = el.getAttribute("data-ts");
           if (timestamp) {
-            const date = new Date(parseInt(timestamp));
+            const date = new Date(parseInt(timestamp) + 9 * 60 * 60 * 1000);
             el.textContent = date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
           }
         });
