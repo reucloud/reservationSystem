@@ -156,7 +156,7 @@
       // グラフ描画
       if (dailySales.length > 0) {
         const labels = dailySales.map(d =>
-          new Date(d.date).toLocaleDateString("ja-JP")
+          new Date(d.date).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })
         );
 
         const data = dailySales.map(d => d.total);
