@@ -611,8 +611,10 @@ fieldset {
   min-height: 0;
   width: 100%;
   display: flex;
+  gap: 16px;
   overflow: hidden;
   align-items: stretch;
+  align-content: stretch;
   height: 100%;
 }
 
