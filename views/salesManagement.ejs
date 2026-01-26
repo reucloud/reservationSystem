@@ -13,6 +13,42 @@
       rel="stylesheet"
       href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"
     />
+    <style>
+      /* salesManagement 固有レイアウト調整 */
+      .salesContents {
+        display: flex;
+        gap: 16px;
+        align-items: stretch;
+        align-content: stretch;
+      }
+      .salesContents .left {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .salesContents .right {
+        width: 360px; /* 必要に応じて調整 */
+        flex: 0 0 360px;
+      }
+      .salesGraph {
+        /* グラフ領域を縦に伸ばす */
+        flex: 1 1 auto;
+        display: flex;
+        min-height: 300px; /* 最低高さ */
+      }
+      .salesGraph canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+      }
+      /* テーブルなどが縦に伸びすぎる場合の制限 */
+      .serviceRank table, .userRank table {
+        max-height: calc(100vh - 300px);
+        overflow: auto;
+        display: block;
+      }
+    </style>
   </head>
   <body>
     <div>
@@ -24,14 +60,13 @@
           <div class="time-right">
             <h4>
               <% if (users && users.updated_at) { %>
-                <span id="updatedAt" data-ts="<%= new Date(users.updated_at).getTime() %>"></span> 時点
+                <%= new Date(users.updated_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) %> 時点
               <% } else { %>
                 --:--:-- 時点
-              <% } %>
-            </h4>
+  <% } %>
+</h4>
           </div>
         </div>
-
 
         <fieldset class="monthPrint">
           <h3><%= Number(selectedMonth.split('-')[1]) %>月売上詳細</h3>
@@ -156,9 +191,10 @@
 
       // グラフ描画
       if (dailySales.length > 0) {
-        const labels = dailySales.map(d =>
-          new Date(new Date(d.date).getTime() + 9 * 60 * 60 * 1000).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })
-        );
+        const labels = dailySales.map(d => {
+          const dt = new Date(d.date);
+          return dt.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', timeZone: 'Asia/Tokyo' });
+        });
 
         const data = dailySales.map(d => d.total);
         const users = dailySales.map(d => d.user_names);
@@ -231,18 +267,6 @@
           }
         });
       }
-
-      // updatedAt を JST 表示に変換
-      document.addEventListener("DOMContentLoaded", () => {
-        const updatedAtElements = document.querySelectorAll("[id='updatedAt']");
-        updatedAtElements.forEach(el => {
-          const timestamp = el.getAttribute("data-ts");
-          if (timestamp) {
-            const date = new Date(parseInt(timestamp) + 9 * 60 * 60 * 1000);
-            el.textContent = date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-          }
-        });
-      });
     </script>
   </body>
 </html>
