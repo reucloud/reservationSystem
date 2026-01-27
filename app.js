@@ -132,6 +132,9 @@ app.get("/forgetPassword", (req, res) => {
 app.get("/adminCoupons", (req, res) => {
   const id = req.session.userId;
 
+  // ログインチェック
+  if (!id) return res.redirect("/");
+
   // 画像ディレクトリから画像ファイル一覧を取得
   const imagesDir = path.join(__dirname, "public", "images");
   let imageFiles = [];
@@ -155,6 +158,12 @@ app.get("/adminCoupons", (req, res) => {
         [id],
         (error, userresults) => {
           if (error) throw error;
+
+          // ユーザーが見つからない場合はログインページへ
+          if (!userresults || userresults.length === 0) {
+            return res.redirect("/");
+          }
+
           const user = userresults[0];
           connection.query(
             "SELECT * FROM coupons ORDER BY code ",
