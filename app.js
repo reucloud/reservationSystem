@@ -10,20 +10,15 @@ import { fileURLToPath } from "url"; // 追加
 const __filename = fileURLToPath(import.meta.url); // 追加
 const __dirname = path.dirname(__filename); // 追加
 
-const connection = mysql.createConnection({
+const connection = mysql.createPool({
   host: "127.0.0.1",
   user: "root",
   password: "reucloud1412",
   database: "reservation_system",
   charset: "utf8mb4",
-});
-
-connection.connect((err) => {
-  if (err) {
-    console.error("MySQL接続エラー: ", err);
-    return;
-  }
-  console.log("✅ MySQL connected!");
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
 
 app.use(express.static(path.join(__dirname, "public"))); //CSS適応
@@ -859,17 +854,17 @@ async function AmountCheck(resource, usage_time, couponCode) {
     ]);
 
   // 有効で無ければエラーを返す
+  if (couponRows.length === 0) return -1;
   const coupon = couponRows[0];
-  if (coupon.length === 0) return -1;
 
   // 今日の日付を取得し不正な日付じゃないか確認
   const today = new Date();
-  if (
-    // 今日が開始日よりも前の場合
-    today < new Date(coupon.start_date) ||
-    // 今日が終了日よりも後の場合
-    today > new Date(coupon.finish_date)
-  ) {
+  const startDate = new Date(coupon.start_date);
+  const finishDate = new Date(coupon.finish_date);
+
+  if (isNaN(startDate) || isNaN(finishDate)) return -2;
+
+  if (today < startDate || today > finishDate) {
     return -2;
   }
 
