@@ -97,9 +97,18 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>￥<%= totalSales %></td>
+                    <td>￥<%= totalSales.toLocaleString() %></td>
                     <td>
-                      <%= Math.floor(((totalSales/totalSales) * 100) -100) %>%
+                      <% 
+                        // 前月比の計算: (今月 - 前月) / 前月 * 100
+                        let monthOverMonth = 0;
+                        if (prevTotalSales > 0) {
+                          monthOverMonth = Math.floor(((totalSales - prevTotalSales) / prevTotalSales) * 100);
+                        } else if (totalSales > 0) {
+                          monthOverMonth = 100; // 前月が0で今月に売上がある場合
+                        }
+                      %>
+                      <%= monthOverMonth >= 0 ? '+' : '' %><%= monthOverMonth %>%
                     </td>
                     <td><%= Math.floor((totalSales/1500) * 100) %> %</td>
                   </tr>

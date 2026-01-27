@@ -195,6 +195,13 @@ app.get("/salesManagement", (req, res) => {
   endDateObj.setMonth(endDateObj.getMonth() + 1);
   const endDate = endDateObj.toISOString().slice(0, 10);
 
+  // 前月の日付範囲を計算
+  const prevMonthObj = new Date(selectedMonth + "-01");
+  prevMonthObj.setMonth(prevMonthObj.getMonth() - 1);
+  const prevStartDate =
+    prevMonthObj.toISOString().slice(0, 10).slice(0, 8) + "01";
+  const prevEndDate = startDate; // 今月の開始日 = 前月の終了日
+
   if (!id) return res.redirect("/");
 
   // 更新時間更新
@@ -214,6 +221,15 @@ app.get("/salesManagement", (req, res) => {
 
           // 売上合計
           const salesSql = `
+            SELECT
+              SUM(amount) AS total_sales
+            FROM reservations
+            WHERE status != 'キャンセル'
+              AND reserve_day >= ? AND reserve_day < ?
+          `;
+
+          // 前月の売上合計
+          const prevSalesSql = `
             SELECT
               SUM(amount) AS total_sales
             FROM reservations
@@ -270,33 +286,44 @@ app.get("/salesManagement", (req, res) => {
               if (error) throw error;
               const totalSales = salesResult[0].total_sales || 0;
 
+              // 前月の売上を取得
               connection.query(
-                resourceRankingSql,
-                [startDate, endDate],
-                (error, resourceRankingResult) => {
+                prevSalesSql,
+                [prevStartDate, prevEndDate],
+                (error, prevSalesResult) => {
                   if (error) throw error;
+                  const prevTotalSales = prevSalesResult[0].total_sales || 0;
 
                   connection.query(
-                    dailySalesSql,
+                    resourceRankingSql,
                     [startDate, endDate],
-                    (error, dailySalesResult) => {
+                    (error, resourceRankingResult) => {
                       if (error) throw error;
 
                       connection.query(
-                        userRankingSql,
+                        dailySalesSql,
                         [startDate, endDate],
-                        (error, userRankingResult) => {
+                        (error, dailySalesResult) => {
                           if (error) throw error;
 
-                          res.render("salesManagement", {
-                            users: user,
-                            totalSales,
-                            ranking: resourceRankingResult || [],
-                            dailySales: dailySalesResult || [],
-                            userRanking: userRankingResult || [],
-                            selectedMonth,
-                            id: id,
-                          });
+                          connection.query(
+                            userRankingSql,
+                            [startDate, endDate],
+                            (error, userRankingResult) => {
+                              if (error) throw error;
+
+                              res.render("salesManagement", {
+                                users: user,
+                                totalSales,
+                                prevTotalSales, // 前月売上を追加
+                                ranking: resourceRankingResult || [],
+                                dailySales: dailySalesResult || [],
+                                userRanking: userRankingResult || [],
+                                selectedMonth,
+                                id: id,
+                              });
+                            },
+                          );
                         },
                       );
                     },
