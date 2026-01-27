@@ -117,7 +117,12 @@
               required
             />
             <label for="">写真ファイル</label>
-            <input type="text" name="photo" required />
+            <select name="image" id="image">
+              <option value="">-- 画像を選択 --</option>
+              <% imageFiles.forEach(file => { %>
+                <option value="<%= file %>"><%= file %></option>
+              <% }) %>
+            </select>
             <label for="">対象サービス</label>
             <div>
               <input type="checkbox" value="マッサージ" name="service[]" />

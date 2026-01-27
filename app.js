@@ -9,6 +9,7 @@ process.env.TZ = "Asia/Tokyo";
 import open from "open";
 import path from "path";
 import { fileURLToPath } from "url"; // 追加
+import fs from "fs"; // 追加: 画像ファイル読み込み用
 
 const __filename = fileURLToPath(import.meta.url); // 追加
 const __dirname = path.dirname(__filename); // 追加
@@ -130,6 +131,20 @@ app.get("/forgetPassword", (req, res) => {
 
 app.get("/adminCoupons", (req, res) => {
   const id = req.session.userId;
+
+  // 画像ディレクトリから画像ファイル一覧を取得
+  const imagesDir = path.join(__dirname, "public", "images");
+  let imageFiles = [];
+  try {
+    const files = fs.readdirSync(imagesDir);
+    // 画像ファイルのみをフィルタ（.png, .jpg, .jpeg, .gif, .webpなど）
+    imageFiles = files.filter((file) =>
+      /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(file),
+    );
+  } catch (error) {
+    console.error("Error reading images directory:", error);
+  }
+
   connection.query(
     "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
     [id],
@@ -150,6 +165,7 @@ app.get("/adminCoupons", (req, res) => {
                 users: user,
                 coupons: coupons || [],
                 id: id,
+                imageFiles: imageFiles, // 画像ファイルリストを渡す
               });
             },
           );
@@ -327,6 +343,18 @@ app.post("/couponInput", (req, res) => {
 app.get("/adminCoupons/edit/:id", (req, res) => {
   const couponId = req.params.id;
 
+  // 画像ディレクトリから画像ファイル一覧を取得
+  const imagesDir = path.join(__dirname, "public", "images");
+  let imageFiles = [];
+  try {
+    const files = fs.readdirSync(imagesDir);
+    imageFiles = files.filter((file) =>
+      /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(file),
+    );
+  } catch (error) {
+    console.error("Error reading images directory:", error);
+  }
+
   connection.query(
     `SELECT
       *,
@@ -340,6 +368,7 @@ app.get("/adminCoupons/edit/:id", (req, res) => {
 
       res.render("adminCouponEdit", {
         coupon: results[0],
+        imageFiles: imageFiles,
       });
     },
   );
