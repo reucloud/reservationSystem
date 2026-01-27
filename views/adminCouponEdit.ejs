@@ -100,7 +100,10 @@
         });
 
       // 開始日が終了日を超えないようにする
-      // 開始時刻変更時
+      const start = document.getElementById("start_date");
+      const end = document.getElementById("finish_date");
+
+      // 開始日変更時
       start.addEventListener("change", () => {
         end.min = start.value;
 
@@ -109,7 +112,7 @@
         }
       });
 
-      // 終了時刻変更時
+      // 終了日変更時
       end.addEventListener("change", () => {
         if (end.value < start.value) {
           alert("終了日は開始日以降を選択してください");

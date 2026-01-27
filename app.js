@@ -3,6 +3,9 @@ import session from "express-session";
 import mysql from "mysql2";
 const app = express();
 
+// 日本時間（JST）に統一
+process.env.TZ = "Asia/Tokyo";
+
 import open from "open";
 import path from "path";
 import { fileURLToPath } from "url"; // 追加
@@ -16,6 +19,7 @@ const connection = mysql.createPool({
   password: "reucloud1412",
   database: "reservation_system",
   charset: "utf8mb4",
+  timezone: "+09:00", // JST
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -288,6 +292,7 @@ app.post("/couponInput", (req, res) => {
   const discountWay = req.body.type;
   const discount = req.body.discount;
   const filter = req.body.filter === "" ? 0 : req.body.filter;
+  // 日付を YYYY-MM-DD 形式でそのまま保存（タイムゾーンずれ防止）
   const start_date = req.body.start_date;
   const finish_date = req.body.finish_date;
   const couponPhoto = req.body.photo;
