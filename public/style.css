@@ -943,6 +943,9 @@ fieldset {
 
   .monthSelect button {
     width: 28%;
+    white-space: nowrap;
+    padding: 10px 8px;
+    font-size: 14px;
   } /* ユーザートップ画面 */
 
   /* 全体を縦並びにする */
@@ -1002,6 +1005,9 @@ fieldset {
 
   .monthSelect button {
     width: 28%;
+    white-space: nowrap;
+    padding: 10px 8px;
+    font-size: 14px;
   }
 
   /* レターボックス */
