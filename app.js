@@ -199,8 +199,7 @@ app.get("/adminCoupons", (req, res) => {
               const coupons = results.map((coupon) => ({
                 ...coupon,
                 isNew:
-                  newCouponIds.has(coupon.id) &&
-                  !viewedCoupons.has(coupon.id),
+                  newCouponIds.has(coupon.id) && !viewedCoupons.has(coupon.id),
               }));
 
               // ページを表示したら、全てのクーポンを「閲覧済み」にする
