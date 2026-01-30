@@ -1019,6 +1019,12 @@ fieldset {
   .reservationContents {
     height: 100px;
   }
+  .chargeButton {
+    display: none;
+  }
+  .monthSelect {
+    margin-right: 10px;
+  }
 
   /* クーポン画面 - スマホ対応 */
   .couponDetails ul {
