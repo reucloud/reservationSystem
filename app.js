@@ -399,8 +399,11 @@ app.get("/salesManagement", (req, res) => {
                                 [selectedMonth],
                                 (error, targetResult) => {
                                   if (error) throw error;
-                                  
-                                  const targetAmount = targetResult.length > 0 ? targetResult[0].target_amount : 0;
+
+                                  const targetAmount =
+                                    targetResult.length > 0
+                                      ? targetResult[0].target_amount
+                                      : 0;
 
                                   res.render("salesManagement", {
                                     users: user,
@@ -413,7 +416,7 @@ app.get("/salesManagement", (req, res) => {
                                     selectedMonth,
                                     id: id,
                                   });
-                                }
+                                },
                               );
                             },
                           );
@@ -1398,7 +1401,7 @@ app.get("/admin/user-info/:id", (req, res) => {
 // 計画売上の取得API
 app.get("/api/sales-target/:month", (req, res) => {
   const { month } = req.params;
-  
+
   connection.query(
     "SELECT target_amount FROM sales_targets WHERE month = ?",
     [month],
@@ -1407,24 +1410,24 @@ app.get("/api/sales-target/:month", (req, res) => {
         console.error(error);
         return res.status(500).json({ error: "Server Error" });
       }
-      
+
       if (results.length === 0) {
         return res.json({ target_amount: 0 });
       }
-      
+
       res.json({ target_amount: results[0].target_amount });
-    }
+    },
   );
 });
 
 // 計画売上の保存API
 app.post("/api/sales-target", (req, res) => {
   const { month, target_amount } = req.body;
-  
+
   if (!month || target_amount === undefined) {
     return res.status(400).json({ error: "月と目標金額が必要です" });
   }
-  
+
   connection.query(
     `
     INSERT INTO sales_targets (month, target_amount)
@@ -1437,9 +1440,9 @@ app.post("/api/sales-target", (req, res) => {
         console.error("DB保存エラー:", error);
         return res.status(500).json({ error: "Server Error" });
       }
-      
+
       res.json({ success: true, message: "計画売上を保存しました" });
-    }
+    },
   );
 });
 
@@ -1458,7 +1461,7 @@ connection.query(
     if (error) {
       console.error("sales_targets テーブル作成エラー:", error);
     }
-  }
+  },
 );
 
 app.listen(3000, "0.0.0.0", () => {
