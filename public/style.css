@@ -1019,6 +1019,22 @@ fieldset {
   .reservationContents {
     height: 100px;
   }
+
+  /* クーポン画面 - スマホ対応 */
+  .couponDetails ul {
+    flex-direction: column;
+    padding: 10px;
+    gap: 16px;
+  }
+
+  .couponDetails fieldset {
+    width: 100%;
+    max-width: none;
+  }
+
+  .couponDetails img {
+    width: 100px;
+  }
 }
 
 /* NEW!バッジのスタイル */
