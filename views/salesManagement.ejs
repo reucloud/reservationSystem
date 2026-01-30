@@ -13,6 +13,7 @@
       rel="stylesheet"
       href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"
     />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       /* salesManagement 固有レイアウト調整 */
       .salesContents {
@@ -48,6 +49,44 @@
         overflow: auto;
         display: block;
       }
+
+      /* 計画売上設定のスタイル */
+      .monthPrint {
+        margin-bottom: 20px;
+      }
+
+      /* スマホ対応 */
+      @media (max-width: 768px) {
+        .monthPrint > div {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+        }
+
+        .monthPrint > div > div:first-child {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          width: 100%;
+        }
+
+        .monthPrint h3 {
+          margin-bottom: 12px !important;
+        }
+
+        .monthPrint form,
+        .monthPrint > div > div:last-child {
+          width: 100%;
+        }
+
+        #targetInput {
+          width: 80px !important;
+          font-size: 14px;
+        }
+
+        #saveTargetBtn {
+          font-size: 14px;
+          padding: 6px 10px !important;
+        }
+      }
     </style>
   </head>
   <body>
@@ -69,17 +108,34 @@
         </div>
 
         <fieldset class="monthPrint">
-          <h3><%= Number(selectedMonth.split('-')[1]) %>月売上詳細</h3>
-          <form method="GET" action="/salesManagement">
-            <input
-              type="month"
-              name="month"
-              min="2000-01-01"
-              max="2099-12-31"
-              value="<%= selectedMonth %>"
-            />
-            <button type="submit">表示</button>
-          </form>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; gap: 16px; align-items: center;">
+              <h3 style="margin: 0;"><%= Number(selectedMonth.split('-')[1]) %>月売上詳細</h3>
+              <form method="GET" action="/salesManagement" style="display: flex; gap: 8px; align-items: center;">
+                <input
+                  type="month"
+                  name="month"
+                  min="2000-01-01"
+                  max="2099-12-31"
+                  value="<%= selectedMonth %>"
+                />
+                <button type="submit">表示</button>
+              </form>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label for="targetInput" style="white-space: nowrap;">計画売上:</label>
+              <input 
+                type="number" 
+                id="targetInput" 
+                placeholder="目標金額"
+                value="<%= targetAmount || '' %>"
+                style="width: 120px; padding: 4px 8px;"
+                min="0"
+              />
+              <span>円</span>
+              <button type="button" id="saveTargetBtn" style="padding: 6px 12px; cursor: pointer;">設定</button>
+            </div>
+          </div>
         </fieldset>
         <div class="salesContents">
           <div class="left">
@@ -110,7 +166,32 @@
                       %>
                       <%= monthOverMonth >= 0 ? '+' : '' %><%= monthOverMonth %>%
                     </td>
-                    <td><%= Math.floor((totalSales/1500) * 100) %> %</td>
+                    <td>
+                      <% 
+                        // 目標達成率の計算
+                        let achievementRate = 0;
+                        if (targetAmount > 0) {
+                          achievementRate = Math.floor((totalSales / targetAmount) * 100);
+                        }
+                        
+                        // 達成率に応じて色を変更
+                        let rateColor = '#000';
+                        if (achievementRate >= 100) {
+                          rateColor = '#00b300'; // 緑
+                        } else if (achievementRate >= 80) {
+                          rateColor = '#ff8c00'; // オレンジ
+                        } else if (achievementRate > 0) {
+                          rateColor = '#ff0000'; // 赤
+                        }
+                      %>
+                      <% if (targetAmount > 0) { %>
+                        <span style="color: <%= rateColor %>; font-weight: bold;">
+                          <%= achievementRate %>%
+                        </span>
+                      <% } else { %>
+                        <span style="color: #999;">未設定</span>
+                      <% } %>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -120,8 +201,7 @@
               <% if (ranking.length === 0){ %>
               <h3>まだデータがありません</h3>
               <% }else{ %>
-              <div>
-                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+              <div style="position: relative; width: 100%; height: 100%; min-height: 300px;">
                 <canvas id="salesChart"></canvas>
               </div>
               <% } %>
@@ -196,7 +276,6 @@
     <script>
       // 日別売上データ（EJS → JS）
       const dailySales = <%- JSON.stringify(dailySales || []) %>;
-      console.log("dailySales:", dailySales);
 
       // グラフ描画
       if (dailySales.length > 0) {
@@ -273,6 +352,55 @@
         wrapper.addEventListener("click", (e) => {
           if (e.target.tagName.toLowerCase() !== "a") {
             nav.classList.remove("active");
+          }
+        });
+      }
+
+      // 計画売上の保存機能
+      const saveTargetBtn = document.getElementById("saveTargetBtn");
+      const targetInput = document.getElementById("targetInput");
+
+      if (saveTargetBtn && targetInput) {
+        saveTargetBtn.addEventListener("click", async () => {
+          const targetAmount = parseInt(targetInput.value) || 0;
+          const selectedMonth = "<%= selectedMonth %>";
+
+          if (targetAmount < 0) {
+            alert("0以上の金額を入力してください");
+            return;
+          }
+
+          // ボタンを一時的に無効化
+          saveTargetBtn.disabled = true;
+          saveTargetBtn.textContent = "保存中...";
+
+          try {
+            const response = await fetch("/api/sales-target", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                month: selectedMonth,
+                target_amount: targetAmount,
+              }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+              // アラートなしでサイレントにリロード
+              location.reload();
+            } else {
+              alert("エラー: " + (result.error || "保存に失敗しました"));
+              saveTargetBtn.disabled = false;
+              saveTargetBtn.textContent = "設定";
+            }
+          } catch (error) {
+            console.error("エラー詳細:", error);
+            alert("通信エラーが発生しました: " + error.message);
+            saveTargetBtn.disabled = false;
+            saveTargetBtn.textContent = "設定";
           }
         });
       }

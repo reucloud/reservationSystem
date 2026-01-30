@@ -88,6 +88,7 @@ async function hasNewCoupons(userId) {
 
 app.use(express.static(path.join(__dirname, "public"))); //CSS適応
 app.use(express.urlencoded({ extended: true })); //ejsファイルから値を持って来れるようにする
+app.use(express.json()); // JSON形式のリクエストボディをパース
 
 app.use(
   session({
@@ -392,16 +393,28 @@ app.get("/salesManagement", (req, res) => {
                             (error, userRankingResult) => {
                               if (error) throw error;
 
-                              res.render("salesManagement", {
-                                users: user,
-                                totalSales,
-                                prevTotalSales, // 前月売上を追加
-                                ranking: resourceRankingResult || [],
-                                dailySales: dailySalesResult || [],
-                                userRanking: userRankingResult || [],
-                                selectedMonth,
-                                id: id,
-                              });
+                              // 計画売上を取得
+                              connection.query(
+                                "SELECT target_amount FROM sales_targets WHERE month = ?",
+                                [selectedMonth],
+                                (error, targetResult) => {
+                                  if (error) throw error;
+                                  
+                                  const targetAmount = targetResult.length > 0 ? targetResult[0].target_amount : 0;
+
+                                  res.render("salesManagement", {
+                                    users: user,
+                                    totalSales,
+                                    prevTotalSales, // 前月売上を追加
+                                    targetAmount, // 計画売上を追加
+                                    ranking: resourceRankingResult || [],
+                                    dailySales: dailySalesResult || [],
+                                    userRanking: userRankingResult || [],
+                                    selectedMonth,
+                                    id: id,
+                                  });
+                                }
+                              );
                             },
                           );
                         },
@@ -1381,6 +1394,72 @@ app.get("/admin/user-info/:id", (req, res) => {
     });
   });
 });
+
+// 計画売上の取得API
+app.get("/api/sales-target/:month", (req, res) => {
+  const { month } = req.params;
+  
+  connection.query(
+    "SELECT target_amount FROM sales_targets WHERE month = ?",
+    [month],
+    (error, results) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Server Error" });
+      }
+      
+      if (results.length === 0) {
+        return res.json({ target_amount: 0 });
+      }
+      
+      res.json({ target_amount: results[0].target_amount });
+    }
+  );
+});
+
+// 計画売上の保存API
+app.post("/api/sales-target", (req, res) => {
+  const { month, target_amount } = req.body;
+  
+  if (!month || target_amount === undefined) {
+    return res.status(400).json({ error: "月と目標金額が必要です" });
+  }
+  
+  connection.query(
+    `
+    INSERT INTO sales_targets (month, target_amount)
+    VALUES (?, ?)
+    ON DUPLICATE KEY UPDATE target_amount = ?, updated_at = CURRENT_TIMESTAMP
+    `,
+    [month, target_amount, target_amount],
+    (error) => {
+      if (error) {
+        console.error("DB保存エラー:", error);
+        return res.status(500).json({ error: "Server Error" });
+      }
+      
+      res.json({ success: true, message: "計画売上を保存しました" });
+    }
+  );
+});
+
+// sales_targetsテーブルの初期化
+connection.query(
+  `
+  CREATE TABLE IF NOT EXISTS sales_targets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    month VARCHAR(7) NOT NULL UNIQUE,
+    target_amount INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  )
+  `,
+  (error) => {
+    if (error) {
+      console.error("sales_targets テーブル作成エラー:", error);
+    }
+  }
+);
 
 app.listen(3000, "0.0.0.0", () => {
   console.log("Server running at http://0.0.0.0:3000");
