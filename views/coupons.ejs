@@ -42,7 +42,10 @@
             %> 
             <% if(coupon.is_open && start <= now && now <= end){ %> 
             <% hasAvailableCoupon = true; %>
-            <fieldset>
+            <fieldset style="position: relative;">
+              <% if (coupon.isNew) { %>
+                <span class="new-badge" style="position: absolute; top: 10px; right: 10px; background: #ff0000; color: white; padding: 6px 12px; border-radius: 12px; font-weight: bold; font-size: 0.9em; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 10;">NEW!</span>
+              <% } %>
               <img src="/images/<%= coupon.photo %>" alt="" />
               <li>クーポンコード: <%= coupon.code %></li>
               <li>内容: <%=coupon.name%></li>

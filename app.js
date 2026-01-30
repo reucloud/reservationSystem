@@ -26,6 +26,26 @@ const connection = mysql.createPool({
   queueLimit: 0,
 });
 
+// NEW!バッジ機能用のグローバル変数
+const newCouponIds = new Set(); // 新しく追加されたクーポンID
+const userViewedCoupons = new Map(); // ユーザーID -> 閲覧済みクーポンIDのSet
+
+// ユーザーに未閲覧の新規クーポンがあるかチェックする関数
+function hasNewCoupons(userId) {
+  if (newCouponIds.size === 0) return false; // 新規クーポンが1つもない
+
+  const viewedCoupons = userViewedCoupons.get(userId) || new Set();
+
+  // 新規クーポンの中に、まだ見ていないものがあるか
+  for (const id of newCouponIds) {
+    if (!viewedCoupons.has(id)) {
+      return true; // 未閲覧の新規クーポンが見つかった
+    }
+  }
+
+  return false; // 全て閲覧済み
+}
+
 app.use(express.static(path.join(__dirname, "public"))); //CSS適応
 app.use(express.urlencoded({ extended: true })); //ejsファイルから値を持って来れるようにする
 
@@ -73,6 +93,7 @@ app.get("/letterBox", async (req, res) => {
       users: user,
       news: news,
       id: id,
+      hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
     });
   } catch (error) {
     console.log(error);
@@ -118,6 +139,7 @@ app.get("/reservationPage", async (req, res) => {
       reservation: reservations,
       selectedMonth: month,
       id: id,
+      hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
     });
   } catch (error) {
     console.log(error);
@@ -169,7 +191,26 @@ app.get("/adminCoupons", (req, res) => {
             "SELECT * FROM coupons ORDER BY code ",
             (error, results) => {
               if (error) throw error;
-              const coupons = results;
+
+              // ユーザーが閲覧済みのクーポンを取得
+              const viewedCoupons = userViewedCoupons.get(id) || new Set();
+
+              // 各クーポンに isNew フラグを追加
+              const coupons = results.map((coupon) => ({
+                ...coupon,
+                isNew:
+                  newCouponIds.has(coupon.id) &&
+                  !viewedCoupons.has(coupon.id),
+              }));
+
+              // ページを表示したら、全てのクーポンを「閲覧済み」にする
+              if (!userViewedCoupons.has(id)) {
+                userViewedCoupons.set(id, new Set());
+              }
+              results.forEach((coupon) => {
+                userViewedCoupons.get(id).add(coupon.id);
+              });
+
               res.render("adminCoupons", {
                 users: user,
                 coupons: coupons || [],
@@ -347,7 +388,7 @@ app.post("/couponInput", (req, res) => {
   // 日付を YYYY-MM-DD 形式でそのまま保存（タイムゾーンずれ防止）
   const start_date = req.body.start_date;
   const finish_date = req.body.finish_date;
-  const couponPhoto = req.body.photo;
+  const couponPhoto = req.body.image || ""; // フォームから'image'として送信される
   const service = Array.isArray(req.body.service)
     ? req.body.service.join(",")
     : req.body.service;
@@ -371,6 +412,10 @@ app.post("/couponInput", (req, res) => {
     ],
     (error, result) => {
       if (error) throw error;
+
+      // 新しいクーポンIDをグローバル変数に追加（insertIdは自動採番されたID）
+      newCouponIds.add(result.insertId);
+
       res.redirect("/adminCoupons");
     },
   );
@@ -594,6 +639,7 @@ app.get("/charge", (req, res) => {
             res.render("charge", {
               users: user,
               id: id,
+              hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
             });
           }
         },
@@ -662,10 +708,28 @@ app.get("/coupons", async (req, res) => {
     .promise()
     .query("SELECT * FROM users WHERE id = ?", [id]);
 
+  // ユーザーが閲覧済みのクーポンを取得
+  const viewedCoupons = userViewedCoupons.get(id) || new Set();
+
+  // 各クーポンに isNew フラグを追加
+  const couponsWithNewFlag = coupons.map((coupon) => ({
+    ...coupon,
+    isNew: newCouponIds.has(coupon.id) && !viewedCoupons.has(coupon.id),
+  }));
+
+  // ページを表示したら、全てのクーポンを「閲覧済み」にする
+  if (!userViewedCoupons.has(id)) {
+    userViewedCoupons.set(id, new Set());
+  }
+  coupons.forEach((coupon) => {
+    userViewedCoupons.get(id).add(coupon.id);
+  });
+
   res.render("coupons", {
     users: user[0],
-    coupons,
+    coupons: couponsWithNewFlag,
     id,
+    hasNewCoupons: false, // クーポンページでは閲覧後なのでfalse
   });
 });
 
@@ -719,6 +783,7 @@ app.get("/top", (req, res) => {
                     id: id,
                     couponError: 0,
                     selectedMonth: month,
+                    hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
                   });
                 },
               );
@@ -866,6 +931,7 @@ app.post("/reservation", async (req, res) => {
                       id,
                       couponError: amount,
                       selectedMonth: month,
+                      hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
                     });
                   },
                 );

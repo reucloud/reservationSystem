@@ -22,7 +22,14 @@
       <li class="mobileOnly"><a href="/letterBox">レターボックス</a></li>
       <li class="mobileOnly"><a href="/reservationPage">予約一覧</a></li>
       <li><a href="/charge">チャージ</a></li>
-      <li><a href="/coupons">クーポン</a></li>
+      <li class="coupon-menu-item">
+        <a href="/coupons" class="coupon-link">
+          クーポン
+          <% if (typeof hasNewCoupons !== 'undefined' && hasNewCoupons) { %>
+            <span class="header-new-badge">NEW!</span>
+          <% } %>
+        </a>
+      </li>
       <% } %>
       <li><a href="/">ログアウト</a></li>
     </ul>

@@ -46,8 +46,13 @@
               const format = (d) =>
               `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
               %>
-              <tr>
-                <td><%=coupon.code%></td>
+              <tr style="position: relative;">
+                <td style="position: relative;">
+                  <%=coupon.code%>
+                  <% if (coupon.isNew) { %>
+                    <span class="new-badge" style="position: absolute; top: 50%; right: -5px; transform: translateY(-50%); background: #ff0000; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.75em; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;">NEW!</span>
+                  <% } %>
+                </td>
                 <td><%=coupon.name%></td>
                 <div class="date">
                   <td><%=format(start)%> <br />〜 <%=format(end)%></td>
