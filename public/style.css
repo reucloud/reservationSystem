@@ -935,16 +935,19 @@ fieldset {
   /* 月選択フォーム */
   .monthSelect {
     width: 100%;
+    gap: 5px;
   }
 
   .monthSelect input {
-    width: 70%;
+    width: 65%;
+    flex-shrink: 1;
   }
 
   .monthSelect button {
-    width: 28%;
+    width: auto;
+    flex-shrink: 0;
     white-space: nowrap;
-    padding: 10px 8px;
+    padding: 10px 12px;
     font-size: 14px;
   } /* ユーザートップ画面 */
 
@@ -997,16 +1000,19 @@ fieldset {
   /* 月選択フォーム */
   .monthSelect {
     width: 100%;
+    gap: 5px;
   }
 
   .monthSelect input {
-    width: 70%;
+    width: 65%;
+    flex-shrink: 1;
   }
 
   .monthSelect button {
-    width: 28%;
+    width: auto;
+    flex-shrink: 0;
     white-space: nowrap;
-    padding: 10px 8px;
+    padding: 10px 12px;
     font-size: 14px;
   }
 
