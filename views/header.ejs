@@ -4,6 +4,9 @@
   <h3 class="logo">予約管理</h3>
   <p><%= users.name %>のページ</p>
   <div class="hamburger" id="hamburger">
+    <% if (users.role !== "admin" && typeof hasNewCoupons !== 'undefined' && hasNewCoupons) { %>
+      <div class="hamburger-new-dot"></div>
+    <% } %>
     <span></span>
     <span></span>
     <span></span>

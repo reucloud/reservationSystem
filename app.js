@@ -30,20 +30,60 @@ const connection = mysql.createPool({
 const newCouponIds = new Set(); // 新しく追加されたクーポンID
 const userViewedCoupons = new Map(); // ユーザーID -> 閲覧済みクーポンIDのSet
 
-// ユーザーに未閲覧の新規クーポンがあるかチェックする関数
-function hasNewCoupons(userId) {
+// ユーザーに未閲覧の新規クーポンがあるかチェックする関数（非同期）
+async function hasNewCoupons(userId) {
   if (newCouponIds.size === 0) return false; // 新規クーポンが1つもない
 
-  const viewedCoupons = userViewedCoupons.get(userId) || new Set();
+  try {
+    // 今月の利用額を計算
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const startStr = start.toISOString().slice(0, 10);
+    const endStr = end.toISOString().slice(0, 10);
 
-  // 新規クーポンの中に、まだ見ていないものがあるか
-  for (const id of newCouponIds) {
-    if (!viewedCoupons.has(id)) {
-      return true; // 未閲覧の新規クーポンが見つかった
+    const [sumRows] = await connection.promise().query(
+      `
+      SELECT COALESCE(SUM(amount),0) AS total
+      FROM reservations
+      WHERE user_id = ?
+        AND status != 'キャンセル'
+        AND reserve_day >= ?
+        AND reserve_day < ?
+      `,
+      [userId, startStr, endStr],
+    );
+
+    const monthlyTotal = sumRows[0].total;
+
+    // ユーザーが利用可能なクーポンを取得（filter条件を満たすもの）
+    const [availableCoupons] = await connection.promise().query(
+      `
+      SELECT id
+      FROM coupons
+      WHERE is_open = 1
+        AND filter <= ?
+      `,
+      [monthlyTotal],
+    );
+
+    // 利用可能なクーポンIDのSetを作成
+    const availableCouponIds = new Set(availableCoupons.map((c) => c.id));
+
+    const viewedCoupons = userViewedCoupons.get(userId) || new Set();
+
+    // 新規クーポンの中に、利用可能でまだ見ていないものがあるか
+    for (const id of newCouponIds) {
+      if (availableCouponIds.has(id) && !viewedCoupons.has(id)) {
+        return true; // 未閲覧の利用可能な新規クーポンが見つかった
+      }
     }
-  }
 
-  return false; // 全て閲覧済み
+    return false; // 全て閲覧済み or 利用不可
+  } catch (error) {
+    console.error("hasNewCoupons error:", error);
+    return false;
+  }
 }
 
 app.use(express.static(path.join(__dirname, "public"))); //CSS適応
@@ -93,7 +133,7 @@ app.get("/letterBox", async (req, res) => {
       users: user,
       news: news,
       id: id,
-      hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
+      hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
     });
   } catch (error) {
     console.log(error);
@@ -139,7 +179,7 @@ app.get("/reservationPage", async (req, res) => {
       reservation: reservations,
       selectedMonth: month,
       id: id,
-      hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
+      hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
     });
   } catch (error) {
     console.log(error);
@@ -617,34 +657,35 @@ app.post("/adminNews/delete/:id", (req, res) => {
   });
 });
 
-app.get("/charge", (req, res) => {
+app.get("/charge", async (req, res) => {
   const id = req.session.userId;
   const role = req.session.role;
 
-  connection.query(
-    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-    [id],
-    (error) => {
-      if (error) throw error;
-      connection.query(
-        "SELECT * FROM users WHERE id = ?",
-        [id],
-        (error, results) => {
-          if (error) throw error;
-          const user = results[0];
-          if (role === "admin") {
-            res.redirect("/adminCharge");
-          } else {
-            res.render("charge", {
-              users: user,
-              id: id,
-              hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
-            });
-          }
-        },
-      );
-    },
-  );
+  try {
+    await connection
+      .promise()
+      .query("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
+        id,
+      ]);
+
+    const [userResult] = await connection
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [id]);
+    const user = userResult[0];
+
+    if (role === "admin") {
+      res.redirect("/adminCharge");
+    } else {
+      res.render("charge", {
+        users: user,
+        id: id,
+        hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server Error");
+  }
 });
 
 app.post("/charge", (req, res) => {
@@ -732,7 +773,7 @@ app.get("/coupons", async (req, res) => {
   });
 });
 
-app.get("/top", (req, res) => {
+app.get("/top", async (req, res) => {
   const id = req.session.userId;
   if (!id) return res.redirect("/");
 
@@ -743,55 +784,48 @@ app.get("/top", (req, res) => {
 
   const endDateStr = endDate.toISOString().slice(0, 10);
 
-  connection.query(
-    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-    [id],
-    (error) => {
-      if (error) throw error;
+  try {
+    await connection
+      .promise()
+      .query("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
+        id,
+      ]);
 
-      connection.query(
-        "SELECT * FROM users WHERE id = ?",
-        [id],
-        (error, userresults) => {
-          if (error) throw error;
-          const user = userresults[0];
+    const [userResult] = await connection
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [id]);
+    const user = userResult[0];
 
-          connection.query(
-            "SELECT * FROM news ORDER BY create_at DESC",
-            (error, newsresults) => {
-              if (error) throw error;
-              const news = newsresults;
+    const [newsResult] = await connection
+      .promise()
+      .query("SELECT * FROM news ORDER BY create_at DESC");
+    const news = newsResult;
 
-              connection.query(
-                `
-                SELECT *
-                FROM reservations
-                WHERE user_id = ?
-                  AND reserve_day >= ?
-                  AND reserve_day < ?
-                ORDER BY reserve_day ASC, start_time ASC
-                `,
-                [id, startDate, endDateStr],
-                (error, reservations) => {
-                  if (error) throw error;
+    const [reservations] = await connection.promise().query(
+      `
+      SELECT *
+      FROM reservations
+      WHERE user_id = ?
+        AND reserve_day >= ?
+        AND reserve_day < ?
+      ORDER BY reserve_day ASC, start_time ASC
+      `,
+      [id, startDate, endDateStr],
+    );
 
-                  res.render("top", {
-                    users: user,
-                    news: news || [],
-                    reservation: reservations || [],
-                    id: id,
-                    couponError: 0,
-                    selectedMonth: month,
-                    hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
-                  });
-                },
-              );
-            },
-          );
-        },
-      );
-    },
-  );
+    res.render("top", {
+      users: user,
+      news: news || [],
+      reservation: reservations || [],
+      id: id,
+      couponError: 0,
+      selectedMonth: month,
+      hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server Error");
+  }
 });
 
 app.post("/login", (req, res) => {
@@ -893,76 +927,66 @@ app.post("/reservation", async (req, res) => {
   const resource = req.body.resource === "massage" ? 1 : 2;
   const month = new Date().toISOString().slice(0, 7);
 
-  const amount = await AmountCheck(resource, usage_time, coupon);
+  try {
+    const amount = await AmountCheck(resource, usage_time, coupon);
 
-  // ① updated_at 更新
-  connection.query(
-    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-    [id],
-    (error) => {
-      if (error) throw error;
+    // ① updated_at 更新
+    await connection
+      .promise()
+      .query("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
+        id,
+      ]);
 
-      // ② users を必ず取得
-      connection.query(
-        "SELECT * FROM users WHERE id = ?",
-        [id],
-        (error, userResults) => {
-          if (error) throw error;
-          const user = userResults[0];
+    // ② users を必ず取得
+    const [userResults] = await connection
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [id]);
+    const user = userResults[0];
 
-          if (amount === -1) {
-            // ③ クーポン無効時
-            connection.query(
-              "SELECT * FROM news ORDER BY create_at DESC",
-              (error, newsResults) => {
-                if (error) throw error;
+    if (amount === -1) {
+      // ③ クーポン無効時
+      const [newsResults] = await connection
+        .promise()
+        .query("SELECT * FROM news ORDER BY create_at DESC");
 
-                connection.query(
-                  "SELECT * FROM reservations WHERE user_id = ?",
-                  [id],
-                  (error, reservations) => {
-                    if (error) throw error;
+      const [reservations] = await connection
+        .promise()
+        .query("SELECT * FROM reservations WHERE user_id = ?", [id]);
 
-                    res.render("top", {
-                      users: user,
-                      news: newsResults || [],
-                      reservation: reservations || [],
-                      id,
-                      couponError: amount,
-                      selectedMonth: month,
-                      hasNewCoupons: hasNewCoupons(id), // NEW!バッジ表示用
-                    });
-                  },
-                );
-              },
-            );
-          } else {
-            // ④ 正常予約
-            connection.query(
-              `INSERT INTO reservations
-               (user_id, reserve_day, start_time, usage_time, resource_id, coupon_code, memo, amount, status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-              [
-                id,
-                reserve_day,
-                start_time,
-                usage_time,
-                resource,
-                coupon,
-                memo,
-                amount,
-                "承認前",
-              ],
-              (error) => {
-                if (error) throw error;
-                res.redirect("/top");
-              },
-            );
-          }
-        },
+      res.render("top", {
+        users: user,
+        news: newsResults || [],
+        reservation: reservations || [],
+        id,
+        couponError: amount,
+        selectedMonth: month,
+        hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
+      });
+    } else {
+      // ④ 正常予約
+      await connection.promise().query(
+        `INSERT INTO reservations
+         (user_id, reserve_day, start_time, usage_time, resource_id, coupon_code, memo, amount, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          reserve_day,
+          start_time,
+          usage_time,
+          resource,
+          coupon,
+          memo,
+          amount,
+          "承認前",
+        ],
       );
-    },
-  );
+
+      res.redirect("/top");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server Error");
+  }
 });
 
 // クーポンコードを反映し価格を返す関数
