@@ -692,6 +692,7 @@ app.get("/charge", async (req, res) => {
     if (role === "admin") {
       res.redirect("/adminCharge");
     } else {
+      console.log(user);
       res.render("charge", {
         users: user,
         id: id,
@@ -1463,6 +1464,15 @@ connection.query(
     }
   },
 );
+
+app.get("/stampCard", (req, res) => {
+  connection.query("SELECT * FROM users", (error, results) => {
+    if (error) throw error;
+    res.render("stampCard", { users: results || [] });
+  });
+});
+
+app.post("/stampCard", (req, res) => {});
 
 app.listen(3000, "0.0.0.0", () => {
   console.log("Server running at http://0.0.0.0:3000");
