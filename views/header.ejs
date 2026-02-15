@@ -1,7 +1,7 @@
 <link rel="stylesheet" href="/style.css" />
 <header class="header">
   <!-- ハンバーガーボタン（スマホ用） -->
-  <h3 class="logo">予約管理</h3>
+  <h3><a class="logo" href="/top">予約管理</a></h3>
   <p><%= users.name %>のページ</p>
   <div class="hamburger" id="hamburger">
     <% if (users.role !== "admin" && typeof hasNewCoupons !== 'undefined' && hasNewCoupons) { %>

@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <title>予約管理システム</title>
-    <!-- レスポンシブ対応用 -->
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"
@@ -29,6 +28,7 @@
       </div>
       <div class="nowPoint">
         <h3>チャージ金額：<span id="chargeAmount">---</span> 円</h3>
+        <h3>ポイント合計：<span id="pointAmount">---</span> P</h3>
       </div>
 
       <div class="userSelect">
@@ -48,16 +48,13 @@
         <button data-amount="2000">2000円<br />チャージ</button>
         <button data-amount="2500">2500円<br />チャージ</button>
       </div>
+      
+      <!-- チャージ金額 -->
       <div class="chargeAmount">
         <div>
           <h3>チャージ金額</h3>
           <div class="amount">
-            <form
-              id="chargeForm"
-              class="chargeInput"
-              action="/charge"
-              method="post"
-            >
+            <form class="chargeInput">
               <input type="hidden" id="targetUserId" name="targetUserId" />
               <input
                 type="number"
@@ -66,20 +63,47 @@
                 onkeydown="return event.key !== 'Enter';"
               />
               <h3 class="yen">円</h3>
-              <input type="button" id="openModal" value="チャージ確認" />
-              <input type="button" id="resetButton" value="リセット" />
+              <input type="button" id="openChargeModal" value="チャージ確認" />
+              <input type="button" id="resetChargeButton" value="リセット" />
             </form>
           </div>
         </div>
       </div>
-      <!-- チャージ確認モーダル -->
+
+      <!-- ポイント修正 -->
+      <div class="chargeAmount">
+        <div>
+          <h3>ポイント修正</h3>
+          <div class="amount">
+            <form class="chargeInput">
+              <input type="hidden" id="targetUserIdPoint" name="targetUserId" />
+              <input
+                type="number"
+                id="pointInput"
+                name="point"
+                onkeydown="return event.key !== 'Enter';"
+              />
+              <h3 class="yen">P</h3>
+              <input type="button" id="openPointModal" value="ポイント修正確認" />
+              <input type="button" id="resetPointButton" value="リセット" />
+            </form>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 共通確認モーダル -->
       <div id="chargeModal" class="modal hidden">
         <div class="modal-content">
-          <h3>チャージ確認</h3>
-          <p>チャージ金額<span id="confirmAmount"></span> 円</p>
+          <h3 id="modalTitle">確認</h3>
+          <p>
+            <span id="modalLabel">チャージ金額</span>
+            <span id="confirmAmount"></span>
+            <span id="modalUnit">円</span>
+          </p>
           <form action="/charge" method="post" onsubmit="return false;">
             <input type="hidden" name="targetUserId" id="confirmTargetUserId" />
             <input type="hidden" name="charge" id="confirmChargeInput" />
+            <input type="hidden" name="type" id="confirmType" />
             <input
               type="password"
               id="chargePassword"
@@ -100,51 +124,101 @@
 
 <script>
   const modal = document.getElementById("chargeModal");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalLabel = document.getElementById("modalLabel");
+  const modalUnit = document.getElementById("modalUnit");
   const confirmAmount = document.getElementById("confirmAmount");
   const confirmChargeInput = document.getElementById("confirmChargeInput");
+  const confirmType = document.getElementById("confirmType");
   const cancelModal = document.getElementById("cancelModal");
 
   const buttons = document.querySelectorAll(".chargeButton button");
   const chargeInput = document.getElementById("chargeInput");
-  const resetButton = document.getElementById("resetButton");
+  const pointInput = document.getElementById("pointInput");
+  const resetChargeButton = document.getElementById("resetChargeButton");
+  const resetPointButton = document.getElementById("resetPointButton");
 
-  const PASSWORD = "reucloud1412"; // 正しいパスワード（仮）
+  const PASSWORD = "reucloud1412";
   const passwordInput = document.getElementById("chargePassword");
   const passwordError = document.getElementById("passwordError");
 
-  // ハンバーガーメニュー切り替え
   const hamburger = document.getElementById("hamburger");
   const nav = document.getElementById("nav");
   const wrapper = document.getElementById("userAllWrapper");
 
+  // チャージボタン（500円、1000円など）
   buttons.forEach((button) => {
     button.addEventListener("click", () => {
-      const amount = Number(button.dataset.amount); // 500など
+      const amount = Number(button.dataset.amount);
       const current = Number(chargeInput.value) || 0;
-
       chargeInput.value = current + amount;
     });
   });
 
-  resetButton.addEventListener("click", () => {
-    // chargeInput.value = "";
-    // 0にしたい場合は ↓
+  // チャージ用リセットボタン
+  resetChargeButton.addEventListener("click", () => {
     chargeInput.value = 0;
   });
 
-  document.getElementById("openModal").addEventListener("click", () => {
+  // ポイント用リセットボタン
+  resetPointButton.addEventListener("click", () => {
+    pointInput.value = 0;
+  });
+
+  // チャージ確認モーダルを開く
+  document.getElementById("openChargeModal").addEventListener("click", () => {
     const value = Number(chargeInput.value) || 0;
+    const userId = document.getElementById("targetUserId").value;
+    
+    if (!userId) {
+      alert("ユーザーを選択してください");
+      return;
+    }
+    
+    modalTitle.textContent = "チャージ確認";
+    modalLabel.textContent = "チャージ金額";
+    modalUnit.textContent = "円";
     confirmAmount.textContent = value;
     confirmChargeInput.value = value;
-    document.getElementById("confirmTargetUserId").value =
-      document.getElementById("targetUserId").value;
+    confirmType.value = "charge";
+    document.getElementById("confirmTargetUserId").value = userId;
+    
+    passwordInput.value = "";
+    passwordError.style.display = "none";
+    
     modal.classList.remove("hidden");
   });
 
+  // ポイント修正確認モーダルを開く
+  document.getElementById("openPointModal").addEventListener("click", () => {
+    const value = Number(pointInput.value) || 0;
+    const userId = document.getElementById("targetUserIdPoint").value;
+    
+    if (!userId) {
+      alert("ユーザーを選択してください");
+      return;
+    }
+    
+    modalTitle.textContent = "ポイント修正確認";
+    modalLabel.textContent = "ポイント修正";
+    modalUnit.textContent = "P";
+    confirmAmount.textContent = value;
+    confirmChargeInput.value = value;
+    confirmType.value = "point";
+    document.getElementById("confirmTargetUserId").value = userId;
+    
+    passwordInput.value = "";
+    passwordError.style.display = "none";
+    
+    modal.classList.remove("hidden");
+  });
+
+  // モーダルキャンセル
   cancelModal.addEventListener("click", () => {
     modal.classList.add("hidden");
   });
 
+  // モーダル確定
   document.getElementById("confirmSubmit").addEventListener("click", () => {
     const inputPassword = passwordInput.value;
 
@@ -160,29 +234,35 @@
   passwordInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      document.getElementById("confirmSubmit").click();
     }
   });
 
-  document
-    .getElementById("userSelect")
-    .addEventListener("change", async function () {
-      const userId = this.value;
-      document.getElementById("targetUserId").value = userId;
-      if (!userId) return;
+  // ユーザー選択時の情報更新
+  document.getElementById("userSelect").addEventListener("change", async function () {
+    const userId = this.value;
+    
+    document.getElementById("targetUserId").value = userId;
+    document.getElementById("targetUserIdPoint").value = userId;
+    
+    if (!userId) {
+      document.getElementById("chargeAmount").textContent = "---";
+      document.getElementById("pointAmount").textContent = "---";
+      return;
+    }
 
-      const res = await fetch(`/admin/user-info/${userId}`);
-      const data = await res.json();
+    const res = await fetch(`/admin/user-info/${userId}`);
+    const data = await res.json();
 
-      document.getElementById("chargeAmount").textContent = data.charge;
-      document.getElementById("updatedTime").textContent = data.updated_at;
-    });
+    document.getElementById("chargeAmount").textContent = data.charge;
+    document.getElementById("pointAmount").textContent = data.point;
+  });
 
-  // ハンバーガーメニュー切り替えボタン
+  // ハンバーガーメニュー切り替え
   hamburger.addEventListener("click", () => {
     nav.classList.toggle("active");
   });
 
-  // メニュー内どこをクリックしても閉じる
   wrapper.addEventListener("click", (e) => {
     if (e.target.tagName.toLowerCase() !== "a") {
       nav.classList.remove("active");
