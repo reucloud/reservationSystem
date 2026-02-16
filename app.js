@@ -708,19 +708,31 @@ app.get("/charge", async (req, res) => {
 app.post("/charge", (req, res) => {
   const targetUserId = req.body.targetUserId;
   const charge = Number(req.body.charge);
+  const type = req.body.type; // "charge" or "point"
 
-  if (!targetUserId) {
-    return res.redirect("/adminCharge");
+  if (type === "charge") {
+    if (!targetUserId) {
+      return res.redirect("/adminCharge");
+    }
+
+    connection.query(
+      "UPDATE users SET charge = charge + ? WHERE id = ?",
+      [charge, targetUserId],
+      (error, results) => {
+        if (error) throw error;
+        res.redirect("/charge");
+      },
+    );
+  } else {
+    connection.query(
+      "UPDATE users SET point = point + ? WHERE id = ?",
+      [charge, targetUserId],
+      (error, results) => {
+        if (error) throw error;
+        res.redirect("/adminCharge");
+      },
+    );
   }
-
-  connection.query(
-    "UPDATE users SET charge =  charge + ? WHERE id = ?",
-    [charge, targetUserId],
-    (error, results) => {
-      if (error) throw error;
-      res.redirect("/charge");
-    },
-  );
 });
 
 app.get("/coupons", async (req, res) => {
