@@ -41,10 +41,10 @@
             />
 
             <label for="">開始時間*</label>
-            <input type="time" name="start_time" required />
+            <input type="time" name="start_time" id="time_input" required />
 
-            <label for="">利用時間*</label>
-            <input type="number" name="usage_time" min="1" required />
+            <label for="">利用時間*(クーポン適応前価格: <span id="priceDisplay">0円</span>)</label>
+            <input type="number" name="usage_time" id="timeInput" min="1" required />
 
             <label for="">内容選択*</label>
             <select name="resource" required>
@@ -136,6 +136,9 @@
       </div>
     </div>
     <script>
+      const timeInput = document.getElementById("timeInput");
+      const priceDisplay = document.getElementById("priceDisplay");
+      
       const hamburger = document.getElementById("hamburger");
       const nav = document.getElementById("nav");
       const wrapper = document.getElementById("userAllWrapper");
@@ -147,6 +150,14 @@
       // 今日を取得
       const today = new Date().toISOString().split("T")[0];
       reserveDay.min = today;
+
+      // 利用時間入力で価格を計算して表示
+      timeInput.addEventListener("change", () => {
+        const time = timeInput.value;
+        const price = (time/10) * 115; 
+
+        priceDisplay.textContent = price + '円';
+      })
 
       // ハンバーガークリックで開閉
       hamburger.addEventListener("click", (e) => {
