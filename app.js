@@ -955,6 +955,7 @@ app.post("/reservation", async (req, res) => {
   const { reserve_day, start_time, usage_time, coupon, memo } = req.body;
   const resource = req.body.resource === "massage" ? 1 : 2;
   const month = new Date().toISOString().slice(0, 7);
+  const usePoint = Number(req.body.point) || 0;
 
   try {
     const amount = await AmountCheck(resource, usage_time, coupon);
@@ -992,11 +993,30 @@ app.post("/reservation", async (req, res) => {
         hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
       });
     } else {
-      // ④ 正常予約
+      // ④ ポイント適応後最終金額確定
+      let finalAmount = amount - usePoint;
+      if (finalAmount < 0) finalAmount = 0;
+
+      if (usePoint > 0) {
+        await connection
+          .promise()
+          .query("UPDATE users SET point = point - ? WHERE id = ?", [
+            usePoint,
+            id,
+          ]);
+      } else if (usePoint === 0) {
+        await connection
+          .promise()
+          .query("UPDATE users SET point = point + ? WHERE id = ?", [
+            Math.floor(amount / 20),
+            id,
+          ]);
+      }
+
       await connection.promise().query(
         `INSERT INTO reservations
-         (user_id, reserve_day, start_time, usage_time, resource_id, coupon_code, memo, amount, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (user_id, reserve_day, start_time, usage_time, resource_id, coupon_code, memo, amount, status, point, use_point)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           reserve_day,
@@ -1005,8 +1025,10 @@ app.post("/reservation", async (req, res) => {
           resource,
           coupon,
           memo,
-          amount,
+          finalAmount,
           "承認前",
+          Math.floor(amount / 20),
+          usePoint,
         ],
       );
 
@@ -1072,20 +1094,22 @@ async function AmountCheck(resource, usage_time, couponCode) {
 }
 
 // 予約ステータス更新&チャージ調整API
+// 予約ステータス更新&チャージ調整API
 app.post("/reservation/status/update", (req, res) => {
   const { reservationId, newStatus } = req.body;
 
   // ① 変更前の予約情報を取得
   connection.query(
-    "SELECT status, price, user_id FROM reservations WHERE id = ?",
+    "SELECT status, amount, user_id, point FROM reservations WHERE id = ?",
     [reservationId],
     (err, rows) => {
       if (err) throw err;
       if (rows.length === 0) return res.sendStatus(404);
 
       const oldStatus = rows[0].status;
-      const price = rows[0].price;
+      const amount = rows[0].amount;
       const userId = rows[0].user_id;
+      const earnedPoint = rows[0].point; // 予約時に付与されたポイント
 
       // ② ステータスを更新
       connection.query(
@@ -1094,24 +1118,39 @@ app.post("/reservation/status/update", (req, res) => {
         (err) => {
           if (err) throw err;
 
-          // ③ ステータス差分によるチャージ調整
+          // ③ チャージ調整（提供済みの場合のみ）
           if (oldStatus !== "提供済み" && newStatus === "提供済み") {
-            // 提供済みになった瞬間だけ減額
             connection.query(
               "UPDATE users SET charge = charge - ? WHERE id = ?",
-              [price, userId],
+              [amount, userId],
             );
           }
 
           if (oldStatus === "提供済み" && newStatus !== "提供済み") {
-            // 提供済みから外れたら返金
             connection.query(
               "UPDATE users SET charge = charge + ? WHERE id = ?",
-              [price, userId],
+              [amount, userId],
             );
           }
 
-          res.redirect("back");
+          // ④ ポイント調整
+          if (oldStatus !== "キャンセル" && newStatus === "キャンセル") {
+            // キャンセルになった場合 → 付与したポイントを減らす
+            connection.query(
+              "UPDATE users SET point = point - ? WHERE id = ?",
+              [earnedPoint, userId],
+            );
+          }
+
+          if (oldStatus === "キャンセル" && newStatus !== "キャンセル") {
+            // キャンセルから戻った場合 → ポイントを再度付与
+            connection.query(
+              "UPDATE users SET point = point + ? WHERE id = ?",
+              [earnedPoint, userId],
+            );
+          }
+
+          res.redirect("/adminTop");
         },
       );
     },
@@ -1217,15 +1256,43 @@ app.get("/adminTop", (req, res) => {
   );
 });
 
-app.post("/adminTop/delete/:id", (req, res) => {
+app.post("/adminTop/delete/:id", async (req, res) => {
   const topId = req.params.id;
 
-  const deleteSql = "DELETE FROM reservations WHERE id = ?";
+  try {
+    // ① 削除前に予約情報を取得
+    const [rows] = await connection
+      .promise()
+      .query("SELECT user_id, point, status FROM reservations WHERE id = ?", [
+        topId,
+      ]);
 
-  connection.query(deleteSql, [topId], (error) => {
-    if (error) throw error;
+    if (rows.length === 0) {
+      return res.redirect("/adminTop");
+    }
+
+    const reservation = rows[0];
+
+    // ② 予約を削除
+    await connection
+      .promise()
+      .query("DELETE FROM reservations WHERE id = ?", [topId]);
+
+    // ③ キャンセル以外のステータスで削除された場合、ポイントを減らす
+    if (reservation.status !== "キャンセル" && reservation.point > 0) {
+      await connection
+        .promise()
+        .query("UPDATE users SET point = point - ? WHERE id = ?", [
+          reservation.point,
+          reservation.user_id,
+        ]);
+    }
+
     res.redirect("/adminTop");
-  });
+  } catch (error) {
+    console.error(error);
+    res.redirect("/adminTop");
+  }
 });
 
 app.get("/adminTop/edit/:id", (req, res) => {
@@ -1265,11 +1332,11 @@ app.post("/adminTop/edit/:id", async (req, res) => {
   } = req.body;
 
   try {
-    // ① 対象予約を取得
+    // ① 対象予約を取得（pointも追加）
     const [rows] = await connection
       .promise()
       .query(
-        "SELECT user_id, amount, status, is_charged FROM reservations WHERE id = ?",
+        "SELECT user_id, amount, status, is_charged, point FROM reservations WHERE id = ?",
         [editId],
       );
 
@@ -1280,16 +1347,11 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     const reservation = rows[0];
 
     // ② ステータス変更に応じたチャージ調整
-    // ルール:
-    // ・「提供済」になった瞬間だけチャージ減額
-    // ・「提供済」から他ステータスに戻ったらチャージを戻す
-
     if (
       reservation.status !== "提供済" &&
       status === "提供済" &&
       reservation.is_charged === 0
     ) {
-      // 提供済になった瞬間 → 減額
       await connection
         .promise()
         .query("UPDATE users SET charge = charge - ? WHERE id = ?", [
@@ -1307,7 +1369,6 @@ app.post("/adminTop/edit/:id", async (req, res) => {
       status !== "提供済" &&
       reservation.is_charged === 1
     ) {
-      // 提供済から戻った瞬間 → 返金
       await connection
         .promise()
         .query("UPDATE users SET charge = charge + ? WHERE id = ?", [
@@ -1320,7 +1381,34 @@ app.post("/adminTop/edit/:id", async (req, res) => {
         .query("UPDATE reservations SET is_charged = 0 WHERE id = ?", [editId]);
     }
 
-    // ③ 予約情報更新（承認済 → 提供済 では charge を触らない）
+    // ③ ポイント調整ロジックを追加
+    if (reservation.status !== "キャンセル" && status === "キャンセル") {
+      // キャンセルになった場合
+      if (reservation.point > 0) {
+        // ポイントを付与していた場合 → 付与したポイントを減らす
+        await connection
+          .promise()
+          .query("UPDATE users SET point = point - ? WHERE id = ?", [
+            reservation.point,
+            reservation.user_id,
+          ]);
+      }
+    }
+
+    if (reservation.status === "キャンセル" && status !== "キャンセル") {
+      // キャンセルから戻った場合
+      if (reservation.point > 0) {
+        // ポイントを再度付与
+        await connection
+          .promise()
+          .query("UPDATE users SET point = point + ? WHERE id = ?", [
+            reservation.point,
+            reservation.user_id,
+          ]);
+      }
+    }
+
+    // ④ 予約情報更新
     await connection.promise().query(
       `
         UPDATE reservations

@@ -55,6 +55,9 @@
             <label for="">クーポンコード(クーポンページから入力)</label>
             <input type="text" name="coupon" />
 
+            <label for="">使用ポイント数(使用可能ポイント数: <%= users.point %> P)</label>
+            <input type="text" name="point" min="0" max="<%= users.point %>" />
+
             <label for="">備考</label>
             <input type="textarea" name="memo" />
 
