@@ -1,7 +1,12 @@
 <link rel="stylesheet" href="/style.css" />
 <header class="header">
   <!-- ハンバーガーボタン（スマホ用） -->
+
+  <% if (users.role === "admin") { %>
+  <h3><a class="logo" href="/adminTop">予約管理</a></h3>
+  <% } else { %>
   <h3><a class="logo" href="/top">予約管理</a></h3>
+  <% } %>
   <p><%= users.name %>のページ</p>
   <div class="hamburger" id="hamburger">
     <% if (users.role !== "admin" && typeof hasNewCoupons !== 'undefined' && hasNewCoupons) { %>
