@@ -32,6 +32,11 @@
         type="text"
       />
 
+      <!-- 付与ポイント（編集可能） -->
+      <label>付与ポイント</label>
+      <input type="number" name="addPoint" value="<%= reserve.point %>" min="0">
+      <small style="color: #ff6600;">※通常は自動計算されます。特別な理由がない限り変更しないでください。</small>
+
       <label for="">予約日</label>
       <input
         name="reserve_day"

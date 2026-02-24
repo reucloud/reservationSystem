@@ -1488,7 +1488,8 @@ app.post("/adminTop/edit/:id", async (req, res) => {
   const {
     status,
     coupon_code,
-    point,
+    usePoint, // 使用ポイント
+    addPoint, // 付与ポイント
     reserve_day,
     start_time,
     usage_time,
@@ -1548,7 +1549,6 @@ app.post("/adminTop/edit/:id", async (req, res) => {
 
     // ポイント調整ロジック
     if (reservation.status !== "キャンセル" && status === "キャンセル") {
-      // 使用したポイントを返す
       if (reservation.use_point > 0) {
         await connection
           .promise()
@@ -1558,7 +1558,6 @@ app.post("/adminTop/edit/:id", async (req, res) => {
           ]);
       }
 
-      // 付与したポイントを減らす
       if (reservation.point > 0) {
         await connection
           .promise()
@@ -1570,7 +1569,6 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     }
 
     if (reservation.status === "キャンセル" && status !== "キャンセル") {
-      // 使用ポイントを再度減らす
       if (reservation.use_point > 0) {
         await connection
           .promise()
@@ -1580,7 +1578,6 @@ app.post("/adminTop/edit/:id", async (req, res) => {
           ]);
       }
 
-      // 付与ポイントを再度付与
       if (reservation.point > 0) {
         await connection
           .promise()
@@ -1591,7 +1588,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
       }
     }
 
-    // 予約情報更新
+    // 予約情報更新（両方のポイントを更新）
     await connection.promise().query(
       `
         UPDATE reservations
@@ -1599,6 +1596,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
           resource_id = ?,
           coupon_code = ?,
           use_point = ?,
+          point = ?,
           reserve_day = ?,
           start_time = ?,
           usage_time = ?,
@@ -1610,7 +1608,8 @@ app.post("/adminTop/edit/:id", async (req, res) => {
       [
         Number(resource_id),
         coupon_code,
-        Number(point),
+        Number(usePoint), // 使用ポイント
+        Number(addPoint), // 付与ポイント
         reserve_day,
         start_time,
         usage_time,
