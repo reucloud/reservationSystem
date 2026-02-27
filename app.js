@@ -1498,6 +1498,8 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     resource_id,
   } = req.body;
 
+  console.log("受信データ:", req.body); // デバッグ用
+
   try {
     const [rows] = await connection
       .promise()
@@ -1507,10 +1509,12 @@ app.post("/adminTop/edit/:id", async (req, res) => {
       );
 
     if (rows.length === 0) {
+      console.log("予約が見つかりません:", editId);
       return res.redirect("/adminTop");
     }
 
     const reservation = rows[0];
+    console.log("編集前の予約情報:", reservation); // デバッグ用
 
     // ステータス変更に応じたチャージ調整
     if (
@@ -1547,8 +1551,9 @@ app.post("/adminTop/edit/:id", async (req, res) => {
         .query("UPDATE reservations SET is_charged = 0 WHERE id = ?", [editId]);
     }
 
-    // ポイント調整ロジック
+    // ポイント調整ロジック（編集前の値で処理）
     if (reservation.status !== "キャンセル" && status === "キャンセル") {
+      // 使用したポイントを返す
       if (reservation.use_point > 0) {
         await connection
           .promise()
@@ -1558,6 +1563,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
           ]);
       }
 
+      // 付与したポイントを減らす
       if (reservation.point > 0) {
         await connection
           .promise()
@@ -1569,6 +1575,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     }
 
     if (reservation.status === "キャンセル" && status !== "キャンセル") {
+      // 使用ポイントを再度減らす
       if (reservation.use_point > 0) {
         await connection
           .promise()
@@ -1578,6 +1585,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
           ]);
       }
 
+      // 付与ポイントを再度付与
       if (reservation.point > 0) {
         await connection
           .promise()
@@ -1588,42 +1596,47 @@ app.post("/adminTop/edit/:id", async (req, res) => {
       }
     }
 
-    // 予約情報更新（両方のポイントを更新）
-    await connection.promise().query(
-      `
-        UPDATE reservations
-        SET
-          resource_id = ?,
-          coupon_code = ?,
-          use_point = ?,
-          point = ?,
-          reserve_day = ?,
-          start_time = ?,
-          usage_time = ?,
-          amount = ?,
-          status = ?,
-          memo = ?
-        WHERE id = ?
-        `,
-      [
-        Number(resource_id),
-        coupon_code,
-        Number(usePoint), // 使用ポイント
-        Number(addPoint), // 付与ポイント
-        reserve_day,
-        start_time,
-        usage_time,
-        amount,
-        status,
-        memo,
-        editId,
-      ],
-    );
+    // 予約情報更新
+    const updateSql = `
+      UPDATE reservations
+      SET
+        resource_id = ?,
+        coupon_code = ?,
+        use_point = ?,
+        point = ?,
+        reserve_day = ?,
+        start_time = ?,
+        usage_time = ?,
+        amount = ?,
+        status = ?,
+        memo = ?
+      WHERE id = ?
+    `;
 
+    const updateParams = [
+      Number(resource_id),
+      coupon_code || null,
+      Number(usePoint) || 0,
+      Number(addPoint) || 0,
+      reserve_day,
+      start_time,
+      Number(usage_time),
+      Number(amount),
+      status,
+      memo || "", // ✅ null ではなく空文字列
+      editId,
+    ];
+
+    console.log("UPDATE SQL:", updateSql); // デバッグ用
+    console.log("UPDATE パラメータ:", updateParams); // デバッグ用
+
+    await connection.promise().query(updateSql, updateParams);
+
+    console.log("更新成功:", editId); // デバッグ用
     res.redirect("/adminTop");
   } catch (err) {
-    console.error(err);
-    res.redirect("/adminTop");
+    console.error("編集エラー:", err);
+    res.status(500).send("Server Error");
   }
 });
 
