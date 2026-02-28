@@ -26,6 +26,15 @@ const connection = mysql.createPool({
   queueLimit: 0,
 });
 
+// ✅ 接続プール全体のタイムゾーンを設定
+connection.query("SET time_zone = '+09:00'", (err) => {
+  if (err) {
+    console.error("❌ タイムゾーン設定エラー:", err);
+  } else {
+    console.log("✅ MySQLタイムゾーンを JST (+09:00) に設定しました");
+  }
+});
+
 // NEW!バッジ機能用のグローバル変数
 const newCouponIds = new Set(); // 新しく追加されたクーポンID
 const userViewedCoupons = new Map(); // ユーザーID -> 閲覧済みクーポンIDのSet
@@ -118,9 +127,7 @@ app.get("/letterBox", async (req, res) => {
 
     await connection
       .promise()
-      .query("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
-        id,
-      ]);
+      .query("UPDATE users SET updated_at = NOW() WHERE id = ?", [id]);
 
     const [userResult] = await connection
       .promise()
@@ -212,7 +219,7 @@ app.get("/adminCoupons", (req, res) => {
   }
 
   connection.query(
-    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+    "UPDATE users SET updated_at = NOW() WHERE id = ?",
     [id],
     (error) => {
       if (error) throw error;
@@ -287,7 +294,7 @@ app.get("/salesManagement", (req, res) => {
 
   // 更新時間更新
   connection.query(
-    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+    "UPDATE users SET updated_at = NOW() WHERE id = ?",
     [id],
     (error) => {
       if (error) throw error;
@@ -600,7 +607,7 @@ app.post("/newsInput", (req, res) => {
 app.get("/adminNews", (req, res) => {
   const id = req.session.userId;
   connection.query(
-    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+    "UPDATE users SET updated_at = NOW() WHERE id = ?",
     [id],
     (error) => {
       if (error) throw error;
@@ -680,9 +687,7 @@ app.get("/charge", async (req, res) => {
   try {
     await connection
       .promise()
-      .query("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
-        id,
-      ]);
+      .query("UPDATE users SET updated_at = NOW() WHERE id = ?", [id]);
 
     const [userResult] = await connection
       .promise()
@@ -816,9 +821,7 @@ app.get("/top", async (req, res) => {
   try {
     await connection
       .promise()
-      .query("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
-        id,
-      ]);
+      .query("UPDATE users SET updated_at = NOW() WHERE id = ?", [id]);
 
     const [userResult] = await connection
       .promise()
@@ -963,9 +966,7 @@ app.post("/reservation", async (req, res) => {
     // ① updated_at 更新
     await connection
       .promise()
-      .query("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
-        id,
-      ]);
+      .query("UPDATE users SET updated_at = NOW() WHERE id = ?", [id]);
 
     // ② users を必ず取得
     const [userResults] = await connection
@@ -1356,7 +1357,7 @@ app.get("/adminTop", (req, res) => {
 
   // DB上の更新時間を更新
   connection.query(
-    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+    "UPDATE users SET updated_at = NOW() WHERE id = ?",
     [id],
     (error) => {
       if (error) throw error;
@@ -1644,8 +1645,7 @@ app.get("/adminCharge", (req, res) => {
   const id = req.session.userId;
   if (!id) return res.redirect("/");
 
-  const updateTimeSql =
-    "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+  const updateTimeSql = "UPDATE users SET updated_at = NOW() WHERE id = ?";
   const loginUserSql = "SELECT * FROM users WHERE id = ?";
   const userListSql = "SELECT id, name FROM users ORDER BY name";
 
@@ -1674,7 +1674,7 @@ app.get("/admin/user-info/:id", (req, res) => {
   // 表示した時点で「確認時刻」を更新
   const updateSql = `
     UPDATE users
-    SET updated_at = CURRENT_TIMESTAMP
+    SET updated_at = NOW()
     WHERE id = ?
   `;
 
