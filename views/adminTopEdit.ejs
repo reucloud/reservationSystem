@@ -18,12 +18,22 @@
       <label for="">予約者</label>
       <input type="text" value="<%= reserve.user_name %>" disabled />
       <input type="hidden" name="user_id" value="<%= reserve.user_id %>" />
+
+      <label for="">クーポン名</label>
+      <input
+        name="coupon_name"
+        value="<%= reserve.coupon_name %>"
+        type="text"
+        disabled
+      />
+
       <label for="">クーポンコード</label>
       <input
         name="coupon_code"
         value="<%= reserve.coupon_code %>"
         type="text"
       />
+
 
       <label for="">使用ポイント数</label>
       <input

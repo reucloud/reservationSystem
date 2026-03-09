@@ -1468,15 +1468,24 @@ app.get("/adminTop/edit/:id", (req, res) => {
       reservations.*,
       DATE_FORMAT(reservations.reserve_day, '%Y-%m-%d') AS reserve_day_str,
       users.name AS user_name,
-      resources.name AS resource_name
+      resources.name AS resource_name,
+      coupons.name AS coupon_name
     FROM reservations
     JOIN users ON reservations.user_id = users.id
     JOIN resources ON reservations.resource_id = resources.id
+    LEFT JOIN coupons ON reservations.coupon_code = coupons.code
     WHERE reservations.id = ?
   `;
 
   connection.query(sql, [topId], (error, result) => {
-    if (error) throw error;
+    if (error) {
+      console.error("SQL実行エラー:", error);
+      return res.status(500).send("Server Error");
+    }
+
+    if (!result || result.length === 0) {
+      return res.redirect("/adminTop");
+    }
 
     res.render("adminTopEdit.ejs", {
       reserve: result[0],
