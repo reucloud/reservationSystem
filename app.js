@@ -1489,8 +1489,8 @@ app.post("/adminTop/edit/:id", async (req, res) => {
   const {
     status,
     coupon_code,
-    usePoint, // 使用ポイント
-    addPoint, // 付与ポイント
+    usePoint, // 新しい使用ポイント
+    addPoint, // 新しい付与ポイント
     reserve_day,
     start_time,
     usage_time,
@@ -1499,7 +1499,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     resource_id,
   } = req.body;
 
-  console.log("受信データ:", req.body); // デバッグ用
+  console.log("受信データ:", req.body);
 
   try {
     const [rows] = await connection
@@ -1515,7 +1515,16 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     }
 
     const reservation = rows[0];
-    console.log("編集前の予約情報:", reservation); // デバッグ用
+    const oldUsePoint = reservation.use_point; // 編集前の使用ポイント
+    const oldAddPoint = reservation.point; // 編集前の付与ポイント
+    const newUsePoint = Number(usePoint) || 0; // 編集後の使用ポイント
+    const newAddPoint = Number(addPoint) || 0; // 編集後の付与ポイント
+
+    console.log("編集前の予約情報:", reservation);
+    console.log("ポイント変更:", {
+      使用ポイント: `${oldUsePoint} → ${newUsePoint}`,
+      付与ポイント: `${oldAddPoint} → ${newAddPoint}`,
+    });
 
     // ステータス変更に応じたチャージ調整
     if (
@@ -1552,48 +1561,79 @@ app.post("/adminTop/edit/:id", async (req, res) => {
         .query("UPDATE reservations SET is_charged = 0 WHERE id = ?", [editId]);
     }
 
-    // ポイント調整ロジック（編集前の値で処理）
+    // ポイント調整ロジック（ステータス変更）
     if (reservation.status !== "キャンセル" && status === "キャンセル") {
-      // 使用したポイントを返す
-      if (reservation.use_point > 0) {
+      // 使用したポイントを返す（編集前の値）
+      if (oldUsePoint > 0) {
         await connection
           .promise()
           .query("UPDATE users SET point = point + ? WHERE id = ?", [
-            reservation.use_point,
+            oldUsePoint,
             reservation.user_id,
           ]);
       }
 
-      // 付与したポイントを減らす
-      if (reservation.point > 0) {
+      // 付与したポイントを減らす（編集前の値）
+      if (oldAddPoint > 0) {
         await connection
           .promise()
           .query("UPDATE users SET point = point - ? WHERE id = ?", [
-            reservation.point,
+            oldAddPoint,
             reservation.user_id,
           ]);
       }
     }
 
     if (reservation.status === "キャンセル" && status !== "キャンセル") {
-      // 使用ポイントを再度減らす
-      if (reservation.use_point > 0) {
+      // 使用ポイントを再度減らす（編集後の値）
+      if (newUsePoint > 0) {
         await connection
           .promise()
           .query("UPDATE users SET point = point - ? WHERE id = ?", [
-            reservation.use_point,
+            newUsePoint,
             reservation.user_id,
           ]);
       }
 
-      // 付与ポイントを再度付与
-      if (reservation.point > 0) {
+      // 付与ポイントを再度付与（編集後の値）
+      if (newAddPoint > 0) {
         await connection
           .promise()
           .query("UPDATE users SET point = point + ? WHERE id = ?", [
-            reservation.point,
+            newAddPoint,
             reservation.user_id,
           ]);
+      }
+    }
+
+    // ポイント調整ロジック（ポイント数変更・ステータスがキャンセル以外の場合のみ）
+    if (status !== "キャンセル") {
+      // 使用ポイントの差分を調整
+      const usePointDiff = newUsePoint - oldUsePoint;
+      if (usePointDiff !== 0) {
+        await connection
+          .promise()
+          .query("UPDATE users SET point = point - ? WHERE id = ?", [
+            usePointDiff,
+            reservation.user_id,
+          ]);
+        console.log(
+          `使用ポイント調整: ${usePointDiff > 0 ? "-" : "+"}${Math.abs(usePointDiff)}P`,
+        );
+      }
+
+      // 付与ポイントの差分を調整
+      const addPointDiff = newAddPoint - oldAddPoint;
+      if (addPointDiff !== 0) {
+        await connection
+          .promise()
+          .query("UPDATE users SET point = point + ? WHERE id = ?", [
+            addPointDiff,
+            reservation.user_id,
+          ]);
+        console.log(
+          `付与ポイント調整: ${addPointDiff > 0 ? "+" : "-"}${Math.abs(addPointDiff)}P`,
+        );
       }
     }
 
@@ -1617,23 +1657,22 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     const updateParams = [
       Number(resource_id),
       coupon_code || null,
-      Number(usePoint) || 0,
-      Number(addPoint) || 0,
+      newUsePoint,
+      newAddPoint,
       reserve_day,
       start_time,
       Number(usage_time),
       Number(amount),
       status,
-      memo || "", // ✅ null ではなく空文字列
+      memo || "",
       editId,
     ];
 
-    console.log("UPDATE SQL:", updateSql); // デバッグ用
-    console.log("UPDATE パラメータ:", updateParams); // デバッグ用
+    console.log("UPDATE パラメータ:", updateParams);
 
     await connection.promise().query(updateSql, updateParams);
 
-    console.log("更新成功:", editId); // デバッグ用
+    console.log("更新成功:", editId);
     res.redirect("/adminTop");
   } catch (err) {
     console.error("編集エラー:", err);
