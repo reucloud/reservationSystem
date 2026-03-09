@@ -1489,8 +1489,8 @@ app.post("/adminTop/edit/:id", async (req, res) => {
   const {
     status,
     coupon_code,
-    usePoint, // 新しい使用ポイント
-    addPoint, // 新しい付与ポイント
+    point, // 使用ポイント（フォームから）
+    addPoint, // 付与ポイント（フォームから）
     reserve_day,
     start_time,
     usage_time,
@@ -1517,53 +1517,35 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     const reservation = rows[0];
     const oldUsePoint = reservation.use_point; // 編集前の使用ポイント
     const oldAddPoint = reservation.point; // 編集前の付与ポイント
-    const newUsePoint = Number(usePoint) || 0; // 編集後の使用ポイント
+    const oldAmount = reservation.amount; // 編集前の金額
+    const newUsePoint = Number(point) || 0; // 編集後の使用ポイント
     const newAddPoint = Number(addPoint) || 0; // 編集後の付与ポイント
+    const newAmount = Number(amount); // 編集後の金額
 
     console.log("編集前の予約情報:", reservation);
-    console.log("ポイント変更:", {
+    console.log("変更内容:", {
       使用ポイント: `${oldUsePoint} → ${newUsePoint}`,
       付与ポイント: `${oldAddPoint} → ${newAddPoint}`,
+      金額: `${oldAmount} → ${newAmount}`,
+      ステータス: `${reservation.status} → ${status}`,
     });
 
-    // ステータス変更に応じたチャージ調整
-    if (
-      reservation.status !== "提供済" &&
-      status === "提供済" &&
-      reservation.is_charged === 0
-    ) {
-      await connection
-        .promise()
-        .query("UPDATE users SET charge = charge - ? WHERE id = ?", [
-          reservation.amount,
-          reservation.user_id,
-        ]);
+    // ===== ステップ1: 編集前の状態をリセット =====
 
-      await connection
-        .promise()
-        .query("UPDATE reservations SET is_charged = 1 WHERE id = ?", [editId]);
-    }
-
-    if (
-      reservation.status === "提供済" &&
-      status !== "提供済" &&
-      reservation.is_charged === 1
-    ) {
+    // チャージをリセット（提供済の場合）
+    if (reservation.status === "提供済" && reservation.is_charged === 1) {
       await connection
         .promise()
         .query("UPDATE users SET charge = charge + ? WHERE id = ?", [
-          reservation.amount,
+          oldAmount,
           reservation.user_id,
         ]);
-
-      await connection
-        .promise()
-        .query("UPDATE reservations SET is_charged = 0 WHERE id = ?", [editId]);
+      console.log(`チャージリセット: +${oldAmount}円`);
     }
 
-    // ポイント調整ロジック（ステータス変更）
-    if (reservation.status !== "キャンセル" && status === "キャンセル") {
-      // 使用したポイントを返す（編集前の値）
+    // ポイントをリセット（キャンセル以外の場合）
+    if (reservation.status !== "キャンセル") {
+      // 使用ポイントを返す
       if (oldUsePoint > 0) {
         await connection
           .promise()
@@ -1571,9 +1553,10 @@ app.post("/adminTop/edit/:id", async (req, res) => {
             oldUsePoint,
             reservation.user_id,
           ]);
+        console.log(`使用ポイントリセット: +${oldUsePoint}P`);
       }
 
-      // 付与したポイントを減らす（編集前の値）
+      // 付与ポイントを減らす
       if (oldAddPoint > 0) {
         await connection
           .promise()
@@ -1581,11 +1564,34 @@ app.post("/adminTop/edit/:id", async (req, res) => {
             oldAddPoint,
             reservation.user_id,
           ]);
+        console.log(`付与ポイントリセット: -${oldAddPoint}P`);
       }
     }
 
-    if (reservation.status === "キャンセル" && status !== "キャンセル") {
-      // 使用ポイントを再度減らす（編集後の値）
+    // ===== ステップ2: 新しい状態を適用 =====
+
+    // チャージを適用（提供済の場合）
+    if (status === "提供済") {
+      await connection
+        .promise()
+        .query("UPDATE users SET charge = charge - ? WHERE id = ?", [
+          newAmount,
+          reservation.user_id,
+        ]);
+      console.log(`チャージ適用: -${newAmount}円`);
+
+      await connection
+        .promise()
+        .query("UPDATE reservations SET is_charged = 1 WHERE id = ?", [editId]);
+    } else {
+      await connection
+        .promise()
+        .query("UPDATE reservations SET is_charged = 0 WHERE id = ?", [editId]);
+    }
+
+    // ポイントを適用（キャンセル以外の場合）
+    if (status !== "キャンセル") {
+      // 使用ポイントを減らす
       if (newUsePoint > 0) {
         await connection
           .promise()
@@ -1593,9 +1599,10 @@ app.post("/adminTop/edit/:id", async (req, res) => {
             newUsePoint,
             reservation.user_id,
           ]);
+        console.log(`使用ポイント適用: -${newUsePoint}P`);
       }
 
-      // 付与ポイントを再度付与（編集後の値）
+      // 付与ポイントを追加
       if (newAddPoint > 0) {
         await connection
           .promise()
@@ -1603,41 +1610,12 @@ app.post("/adminTop/edit/:id", async (req, res) => {
             newAddPoint,
             reservation.user_id,
           ]);
+        console.log(`付与ポイント適用: +${newAddPoint}P`);
       }
     }
 
-    // ポイント調整ロジック（ポイント数変更・ステータスがキャンセル以外の場合のみ）
-    if (status !== "キャンセル") {
-      // 使用ポイントの差分を調整
-      const usePointDiff = newUsePoint - oldUsePoint;
-      if (usePointDiff !== 0) {
-        await connection
-          .promise()
-          .query("UPDATE users SET point = point - ? WHERE id = ?", [
-            usePointDiff,
-            reservation.user_id,
-          ]);
-        console.log(
-          `使用ポイント調整: ${usePointDiff > 0 ? "-" : "+"}${Math.abs(usePointDiff)}P`,
-        );
-      }
+    // ===== ステップ3: 予約情報を更新 =====
 
-      // 付与ポイントの差分を調整
-      const addPointDiff = newAddPoint - oldAddPoint;
-      if (addPointDiff !== 0) {
-        await connection
-          .promise()
-          .query("UPDATE users SET point = point + ? WHERE id = ?", [
-            addPointDiff,
-            reservation.user_id,
-          ]);
-        console.log(
-          `付与ポイント調整: ${addPointDiff > 0 ? "+" : "-"}${Math.abs(addPointDiff)}P`,
-        );
-      }
-    }
-
-    // 予約情報更新
     const updateSql = `
       UPDATE reservations
       SET
@@ -1662,7 +1640,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
       reserve_day,
       start_time,
       Number(usage_time),
-      Number(amount),
+      newAmount,
       status,
       memo || "",
       editId,
@@ -1672,10 +1650,10 @@ app.post("/adminTop/edit/:id", async (req, res) => {
 
     await connection.promise().query(updateSql, updateParams);
 
-    console.log("更新成功:", editId);
+    console.log("✅ 更新成功:", editId);
     res.redirect("/adminTop");
   } catch (err) {
-    console.error("編集エラー:", err);
+    console.error("❌ 編集エラー:", err);
     res.status(500).send("Server Error");
   }
 });
