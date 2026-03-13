@@ -52,6 +52,9 @@
               <li>期限: <%= format(end) %></li>
               <li>対象サービス: <%= coupon.service %></li>
               <li>概要: <%= coupon.memo %></li>
+              <form action="/top/<%= coupon.code %>" method="GET">
+                <button type="submit">クーポンを使用する</button>
+              </form>
             </fieldset>
             <% }}) %> <% if (!hasAvailableCoupon) { %>
             <h3>使用可能なクーポンはありません</h3>

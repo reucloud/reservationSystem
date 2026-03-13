@@ -53,7 +53,7 @@
             </select>
 
             <label for="">クーポンコード(クーポンページから入力)</label>
-            <input type="text" name="coupon" />
+            <input type="text" name="coupon" value="<%= couponCode %>"/>
 
             <label for="">使用ポイント数(使用可能ポイント数: <%= users.point %> P)</label>
             <input type="text" name="point" min="0" max="<%= users.point %>" />

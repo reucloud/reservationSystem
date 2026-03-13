@@ -852,6 +852,63 @@ app.get("/top", async (req, res) => {
       id: id,
       couponError: 0,
       selectedMonth: month,
+      couponCode: "", // クーポンコードエラー用の変数を追加
+      hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server Error");
+  }
+});
+
+app.get("/top/:couponCode", async (req, res) => {
+  const id = req.session.userId;
+  if (!id) return res.redirect("/");
+
+  const couponCode = req.params.couponCode;
+
+  const month = req.query.month || new Date().toISOString().slice(0, 7);
+  const startDate = `${month}-01`;
+  const endDate = new Date(month + "-01");
+  endDate.setMonth(endDate.getMonth() + 1);
+
+  const endDateStr = endDate.toISOString().slice(0, 10);
+
+  try {
+    await connection
+      .promise()
+      .query("UPDATE users SET updated_at = NOW() WHERE id = ?", [id]);
+
+    const [userResult] = await connection
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [id]);
+    const user = userResult[0];
+
+    const [newsResult] = await connection
+      .promise()
+      .query("SELECT * FROM news ORDER BY create_at DESC");
+    const news = newsResult;
+
+    const [reservations] = await connection.promise().query(
+      `
+      SELECT *
+      FROM reservations
+      WHERE user_id = ?
+        AND reserve_day >= ?
+        AND reserve_day < ?
+      ORDER BY reserve_day ASC, start_time ASC
+      `,
+      [id, startDate, endDateStr],
+    );
+
+    res.render("top", {
+      users: user,
+      news: news || [],
+      reservation: reservations || [],
+      id: id,
+      couponError: 0,
+      selectedMonth: month,
+      couponCode: couponCode, // クーポンコードを渡す
       hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
     });
   } catch (error) {
