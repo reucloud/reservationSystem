@@ -67,14 +67,16 @@
               onsubmit="return confirm('予約します。よろしいですか？');"
             />
             <% if(couponError === -1){ %>
-            <p>クーポンコードが無効です</p>
-            <% }else if(couponError === -2){ %>
-            <p>開始日または終了日が無効です</p>
-            <% }else if(couponError === -3){ %>
-            <p>サービスが使用不可です</p>
-            <% } %> <% if (couponError) { %>
-            <p class="error">このクーポンは利用できません</p>
-            <% } %>
+  <p>クーポンコードが無効です</p>
+<% }else if(couponError === -2){ %>
+  <p>開始日または終了日が無効です</p>
+<% }else if(couponError === -3){ %>
+  <p>サービスが使用不可です</p>
+<% } %>
+
+<% if (couponError < 0) { %>
+  <p class="error">このクーポンは利用できません</p>
+<% } %>
             <h3>※クーポンとポイントの併用はできません</h3>
           </form>
         </div>

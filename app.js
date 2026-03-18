@@ -1019,6 +1019,9 @@ app.post("/reservation", async (req, res) => {
 
   try {
     const amount = await AmountCheck(resource, usage_time, coupon);
+    console.log("AmountCheckの結果:", amount);
+    console.log("amountの型:", typeof amount);
+    console.log("amount === -1:", amount === -1);
 
     // ① updated_at 更新
     await connection
@@ -1047,9 +1050,11 @@ app.post("/reservation", async (req, res) => {
         reservation: reservations || [],
         id,
         couponError: amount,
+        couponCode: "", // クーポンコードエラー用の変数を追加
         selectedMonth: month,
         hasNewCoupons: await hasNewCoupons(id),
       });
+      return;
     } else {
       // ④ ポイント適用後最終金額確定
       let finalAmount = amount - usePoint;
