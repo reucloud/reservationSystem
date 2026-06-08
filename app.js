@@ -735,9 +735,18 @@ app.post("/charge", (req, res) => {
         res.redirect("/charge");
       },
     );
-  } else {
+  } else if (type === "point") {
     connection.query(
       "UPDATE users SET point = point + ? WHERE id = ?",
+      [charge, targetUserId],
+      (error, results) => {
+        if (error) throw error;
+        res.redirect("/adminCharge");
+      },
+    );
+  } else if (type === "ticket") {
+    connection.query(
+      "UPDATE users SET ticket = ticket + ? WHERE id = ?",
       [charge, targetUserId],
       (error, results) => {
         if (error) throw error;
