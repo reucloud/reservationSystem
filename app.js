@@ -1760,8 +1760,8 @@ app.post("/adminTop/edit/:id", async (req, res) => {
       newAmount,
       status,
       memo || "",
-      editId,
       ticket ? Number(ticket) : 0,
+      editId,
     ];
 
     console.log("UPDATE パラメータ:", updateParams);
