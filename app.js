@@ -907,6 +907,11 @@ app.get("/top/:couponCode", async (req, res) => {
       .query("SELECT * FROM news ORDER BY create_at DESC");
     const news = newsResult;
 
+    const [resourceResult] = await connection
+      .promise()
+      .query("SELECT * FROM resources ORDER BY id ASC");
+    const resources = resourceResult;
+
     const [reservations] = await connection.promise().query(
       `
       SELECT *
@@ -926,6 +931,7 @@ app.get("/top/:couponCode", async (req, res) => {
       id: id,
       couponError: 0,
       selectedMonth: month,
+      resources: resources || [],
       couponCode: couponCode, // クーポンコードを渡す
       hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
     });
@@ -1037,9 +1043,6 @@ app.post("/reservation", async (req, res) => {
 
   try {
     const amount = await AmountCheck(resource, usage_time, coupon);
-    console.log("AmountCheckの結果:", amount);
-    console.log("amountの型:", typeof amount);
-    console.log("amount === -1:", amount === -1);
 
     // ① updated_at 更新
     await connection
@@ -1062,6 +1065,11 @@ app.post("/reservation", async (req, res) => {
         .promise()
         .query("SELECT * FROM reservations WHERE user_id = ?", [id]);
 
+      const [resourceResult] = await connection
+        .promise()
+        .query("SELECT * FROM resources ORDER BY id ASC");
+      const resources = resourceResult;
+
       res.render("top", {
         users: user,
         news: newsResults || [],
@@ -1071,6 +1079,7 @@ app.post("/reservation", async (req, res) => {
         couponCode: "", // クーポンコードエラー用の変数を追加
         selectedMonth: month,
         hasNewCoupons: await hasNewCoupons(id),
+        resources: resources || [],
       });
       return;
     } else {
@@ -1557,7 +1566,7 @@ app.get("/adminTop/edit/:id", (req, res) => {
     WHERE reservations.id = ?
   `;
 
-  connection.query(sql, [topId], (error, result) => {
+  connection.query(sql, [topId], async (error, result) => {
     if (error) {
       console.error("SQL実行エラー:", error);
       return res.status(500).send("Server Error");
@@ -1567,8 +1576,14 @@ app.get("/adminTop/edit/:id", (req, res) => {
       return res.redirect("/adminTop");
     }
 
+    const [resourceResult] = await connection
+      .promise()
+      .query("SELECT * FROM resources ORDER BY id ASC");
+    const resources = resourceResult;
+
     res.render("adminTopEdit.ejs", {
       reserve: result[0],
+      resources: resources || [],
     });
   });
 });

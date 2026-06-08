@@ -82,20 +82,15 @@
       <input type="text" name="memo" value="<%= reserve.memo %>" />
       <label for="">予約内容</label>
       <select name="resource_id">
-        <% if (reserve.resource_id == 1) { %>
-        <option value="1" selected>マッサージ</option>
-        <% } else { %>
-        <option value="1">マッサージ</option>
-        <% } %> <% if (reserve.resource_id == 2) { %>
-        <option value="2" selected>料理</option>
-        <% } else { %>
-        <option value="2">料理</option>
-        <% } %> <% if (reserve.resource_id == 3) { %>
-        <option value="3" selected>その他</option>
-        <% } else { %>
-        <option value="3">その他</option>
-        <% } %>
-      </select>
+  <% resources.forEach(resource => { %>
+    <option
+      value="<%= resource.id %>"
+      <%= reserve.resource_id == resource.id ? "selected" : "" %>
+    >
+      <%= resource.name %>
+    </option>
+  <% }) %>
+</select>
       <label for="">ステータス</label>
       <select name="status">
         <% if (reserve.status === '承認前') { %>
