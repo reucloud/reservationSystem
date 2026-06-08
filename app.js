@@ -1803,7 +1803,7 @@ app.get("/admin/user-info/:id", (req, res) => {
     if (err) return res.status(500).json({ error: err });
 
     const selectSql = `
-      SELECT charge, point,
+      SELECT charge, point,ticket,
              DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') AS updated_at
       FROM users
       WHERE id = ?

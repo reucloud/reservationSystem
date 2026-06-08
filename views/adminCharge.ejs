@@ -29,6 +29,7 @@
       <div class="nowPoint">
         <h3>チャージ金額：<span id="chargeAmount">---</span> 円</h3>
         <h3>ポイント合計：<span id="pointAmount">---</span> P</h3>
+        <h3>チケット残数：<span id="ticketAmount">---</span> 枚</h3>
       </div>
 
       <div class="userSelect">
@@ -86,6 +87,26 @@
               <h3 class="yen">P</h3>
               <input type="button" id="openPointModal" value="ポイント修正確認" />
               <input type="button" id="resetPointButton" value="リセット" />
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="chargeAmount">
+        <div>
+          <h3>チケット修正</h3>
+          <div class="amount">
+            <form class="chargeInput">
+              <input type="hidden" id="targetUserIdTicket" name="targetUserId" />
+              <input
+                type="number"
+                id="ticketInput"
+                name="ticket"
+                onkeydown="return event.key !== 'Enter';"
+              />
+              <h3 class="yen">枚</h3>
+              <input type="button" id="openTicketModal" value="チケット修正確認" />
+              <input type="button" id="resetTicketButton" value="リセット" />
             </form>
           </div>
         </div>
@@ -213,6 +234,30 @@
     modal.classList.remove("hidden");
   });
 
+  // チケット修正確認モーダルを開く
+  document.getElementById("openTicketModal").addEventListener("click", () => {
+    const value = Number(ticketInput.value) || 0;
+    const userId = document.getElementById("targetUserIdTicket").value;
+
+    if (!userId) {
+      alert("ユーザーを選択してください");
+      return;
+    }
+
+    modalTitle.textContent = "チケット修正確認";
+    modalLabel.textContent = "チケット修正";
+    modalUnit.textContent = "枚";
+    confirmAmount.textContent = value;
+    confirmChargeInput.value = value;
+    confirmType.value = "ticket";
+    document.getElementById("confirmTargetUserId").value = userId;
+    
+    passwordInput.value = "";
+    passwordError.style.display = "none";
+    
+    modal.classList.remove("hidden");
+  });
+
   // モーダルキャンセル
   cancelModal.addEventListener("click", () => {
     modal.classList.add("hidden");
@@ -244,10 +289,12 @@
     
     document.getElementById("targetUserId").value = userId;
     document.getElementById("targetUserIdPoint").value = userId;
-    
+    document.getElementById("targetUserIdTicket").value = userId;
+
     if (!userId) {
       document.getElementById("chargeAmount").textContent = "---";
       document.getElementById("pointAmount").textContent = "---";
+      document.getElementById("ticketAmount").textContent = "---";
       return;
     }
 
@@ -256,6 +303,7 @@
 
     document.getElementById("chargeAmount").textContent = data.charge;
     document.getElementById("pointAmount").textContent = data.point;
+    document.getElementById("ticketAmount").textContent = data.ticket;
   });
 
   // ハンバーガーメニュー切り替え
