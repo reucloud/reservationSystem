@@ -38,6 +38,7 @@ connection.query("SET time_zone = '+09:00'", (err) => {
 // NEW!バッジ機能用のグローバル変数
 const newCouponIds = new Set(); // 新しく追加されたクーポンID
 const userViewedCoupons = new Map(); // ユーザーID -> 閲覧済みクーポンIDのSet
+const updatedCouponIds = new Set(); // 新たに追加・編集されたクーポンID
 
 // ユーザーに未閲覧の新規クーポンがあるかチェックする関数（非同期）
 async function hasNewCoupons(userId) {
@@ -247,7 +248,12 @@ app.get("/adminCoupons", (req, res) => {
               const coupons = results.map((coupon) => ({
                 ...coupon,
                 isNew:
-                  newCouponIds.has(coupon.id) && !viewedCoupons.has(coupon.id),
+                  (newCouponIds.has(coupon.id) ||
+                    updatedCouponIds.has(coupon.id)) &&
+                  !viewedCoupons.has(coupon.id) &&
+                  coupon.is_open === 1 &&
+                  new Date() >= new Date(coupon.start_date) &&
+                  new Date() <= new Date(coupon.finish_date),
               }));
 
               // ページを表示したら、全てのクーポンを「閲覧済み」にする
@@ -575,6 +581,7 @@ app.post("/adminCoupons/edit/:id", (req, res) => {
     ],
     (error) => {
       if (error) throw error;
+      updatedCouponIds.add(Number(couponId));
 
       // 更新後は一覧へ戻す
       res.redirect("/adminCoupons");
@@ -788,7 +795,12 @@ app.get("/coupons", async (req, res) => {
   // 各クーポンに isNew フラグを追加
   const couponsWithNewFlag = coupons.map((coupon) => ({
     ...coupon,
-    isNew: newCouponIds.has(coupon.id) && !viewedCoupons.has(coupon.id),
+    isNew:
+      (newCouponIds.has(coupon.id) || updatedCouponIds.has(coupon.id)) &&
+      !viewedCoupons.has(coupon.id) &&
+      coupon.is_open === 1 &&
+      new Date() >= new Date(coupon.start_date) &&
+      new Date() <= new Date(coupon.finish_date),
   }));
 
   // ページを表示したら、全てのクーポンを「閲覧済み」にする
@@ -845,6 +857,11 @@ app.get("/top", async (req, res) => {
       [id, startDate, endDateStr],
     );
 
+    const [resourceResult] = await connection
+      .promise()
+      .query("SELECT * FROM resources ORDER BY id ASC");
+    const resources = resourceResult;
+
     res.render("top", {
       users: user,
       news: news || [],
@@ -853,6 +870,7 @@ app.get("/top", async (req, res) => {
       couponError: 0,
       selectedMonth: month,
       couponCode: "", // クーポンコードエラー用の変数を追加
+      resources: resources || [],
       hasNewCoupons: await hasNewCoupons(id), // NEW!バッジ表示用
     });
   } catch (error) {
@@ -1013,7 +1031,7 @@ app.post("/reservation", async (req, res) => {
   if (!id) return res.redirect("/");
 
   const { reserve_day, start_time, usage_time, coupon, memo } = req.body;
-  const resource = req.body.resource === "massage" ? 1 : 2;
+  const resource = req.body.resource;
   const month = new Date().toISOString().slice(0, 7);
   const usePoint = Number(req.body.point) || 0;
 

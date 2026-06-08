@@ -48,8 +48,9 @@
 
             <label for="">内容選択*</label>
             <select name="resource" required>
-              <option value="massage">マッサージ</option>
-              <option value="cook">調理</option>
+              <% resources.forEach(resource => { %>
+                <option value="<%= resource.id %>"><%= resource.name %></option>
+              <% }) %>
             </select>
 
             <label for="">クーポンコード(クーポンページから入力)</label>
