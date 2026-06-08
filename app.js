@@ -1744,7 +1744,8 @@ app.post("/adminTop/edit/:id", async (req, res) => {
         usage_time = ?,
         amount = ?,
         status = ?,
-        memo = ?
+        memo = ?,
+        ticket = ?
       WHERE id = ?
     `;
 
@@ -1760,6 +1761,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
       status,
       memo || "",
       editId,
+      ticket ? Number(ticket) : 0,
     ];
 
     console.log("UPDATE パラメータ:", updateParams);
