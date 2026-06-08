@@ -1049,6 +1049,7 @@ app.post("/reservation", async (req, res) => {
   const resource = req.body.resource;
   const month = new Date().toISOString().slice(0, 7);
   const usePoint = Number(req.body.point) || 0;
+  const ticket = Number(req.body.ticket) || 0;
 
   try {
     const amount = await AmountCheck(resource, usage_time, coupon);
@@ -1120,8 +1121,8 @@ app.post("/reservation", async (req, res) => {
       // ⑥ 予約をDBに登録
       await connection.promise().query(
         `INSERT INTO reservations
-         (user_id, reserve_day, start_time, usage_time, resource_id, coupon_code, memo, amount, status, point, use_point)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (user_id, reserve_day, start_time, usage_time, resource_id, coupon_code, memo, amount, status, point, use_point, ticket)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           reserve_day,
@@ -1134,6 +1135,7 @@ app.post("/reservation", async (req, res) => {
           "承認前",
           earnedPoints, // ✅ 付与したポイント数（使用時は0）
           usePoint, // ✅ 使用したポイント数
+          ticket, // ✅ 使用したチケット数
         ],
       );
 
@@ -1610,6 +1612,7 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     amount,
     memo,
     resource_id,
+    ticket,
   } = req.body;
 
   console.log("受信データ:", req.body);
