@@ -529,17 +529,20 @@ header a {
   font-size: 14px;
 }
 
-.couponTable {
+.couponTable,
+.newsTable {
   flex: 1;
   overflow-y: auto;
 }
 
-.couponTable table {
+.couponTable table,
+.newsTable table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.couponTable thead th {
+.couponTable thead th,
+.newsTable thead th {
   position: sticky;
   top: 0;
   background: white;
