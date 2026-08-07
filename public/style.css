@@ -522,6 +522,24 @@ header a {
   font-size: 14px;
 }
 
+.couponTable {
+  max-height: 500px; /* 好きな高さ */
+  overflow-y: auto;
+  display: block;
+}
+
+.couponTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.couponTable thead th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+}
+
 .userAllWrapper {
   height: 80%;
 }
