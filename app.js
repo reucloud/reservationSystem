@@ -1640,14 +1640,6 @@ app.post("/adminTop/edit/:id", async (req, res) => {
     const newAddPoint = Number(addPoint) || 0; // 編集後の付与ポイント
     const newAmount = Number(amount); // 編集後の金額
 
-    console.log("編集前の予約情報:", reservation);
-    console.log("変更内容:", {
-      使用ポイント: `${oldUsePoint} → ${newUsePoint}`,
-      付与ポイント: `${oldAddPoint} → ${newAddPoint}`,
-      金額: `${oldAmount} → ${newAmount}`,
-      ステータス: `${reservation.status} → ${status}`,
-    });
-
     // ===== ステップ1: 編集前の状態をリセット =====
 
     // チャージをリセット（提供済の場合）

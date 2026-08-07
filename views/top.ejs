@@ -50,6 +50,7 @@
             <select name="resource" required>
               <% resources.forEach(resource => { %>
                 <option value="<%= resource.id %>"><%= resource.name %></option>
+                <% let resource_data = resource %>
               <% }) %>
             </select>
 
@@ -59,8 +60,8 @@
             <label for="">使用ポイント数(使用可能ポイント数: <%= users.point %> P)</label>
             <input type="text" name="point" min="0" max="<%= users.point %>" />
 
-            <label for="">使用チケット数(使用可能チケット数: <%= users.ticket %> 枚)</label>
-            <input type="text" name="ticket" min="0" max="<%= users.ticket %>" />
+            <label for="">使用チケット数(使用可能チケット数: <span id="availableTicket">0</span> 枚)</label>
+            <input type="text" name="ticket" id="ticketInput" min="0" max="<%= users.ticket %>" />
 
             <label for="">備考</label>
             <input type="textarea" name="memo" />
@@ -150,6 +151,10 @@
       const nav = document.getElementById("nav");
       const wrapper = document.getElementById("userAllWrapper");
 
+      const ticketInput = document.getElementById("ticketInput");
+      const availableTicket = document.getElementById("availableTicket");
+      const maxTicket = <%= users.ticket %>;
+
       // 予約日と開始時間を取得
       const reserveDay = document.querySelector('input[name="reserve_day"]');
       const startTime = document.querySelector('input[name="start_time"]');
@@ -159,12 +164,29 @@
       reserveDay.min = today;
 
       // 利用時間入力で価格を計算して表示
-      timeInput.addEventListener("change", () => {
+      timeInput.addEventListener("input", () => {
         const time = timeInput.value;
         const price = (time/10) * 115; 
 
         priceDisplay.textContent = price + '円';
       })
+
+      timeInput.addEventListener("input", () => {
+        const usageTime = Number(timeInput.value);
+
+        // 10分ごとに1枚使える
+        const usableTicket = Math.floor(usageTime / 10);
+        // 実際に使える枚数
+        const available = Math.min(usableTicket, maxTicket);
+        // inputの最大値
+        ticketInput.max = available;
+        // 表示も更新
+        availableTicket.textContent = available;
+        // 入力値が上限を超えたら修正
+        if (Number(ticketInput.value) > available) {
+          ticketInput.value = available;
+        }
+      });
 
       // ハンバーガークリックで開閉
       hamburger.addEventListener("click", (e) => {
